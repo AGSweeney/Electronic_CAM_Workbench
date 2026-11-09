@@ -1,0 +1,74 @@
+<h1>Building a profile</h1>
+<p>An axis's motion is a list of <b>segments</b> over its master (0–360° on the crank, 0 to the duration on
+the timeline). Each segment has an <b>end</b> (where it stops on the master), an <b>end position</b> (in the
+axis's units) and a <b>motion law</b>; it starts where the previous one ended.</p>
+
+<h2><a name="knots"></a>Knots</h2>
+<p>The boundaries between segments are <b>knots</b> (the circles in the diagram). Knot 0 is at x = 0 (the
+start position); the last knot is at 360° (crank) or at the duration (timeline).</p>
+<ul>
+<li><b>Drag</b> a knot to move it: sideways changes when, up and down changes where.
+<kbd>Shift</kbd> drags vertically only, <kbd>Ctrl</kbd> horizontally only, <kbd>Alt</kbd> without snapping.</li>
+<li>A <b>dwell</b> (no motion) moves with its knots: its end is tied to its start.</li>
+<li><b>Double-click</b> in a segment to <b>split</b> it there; <b>right-click</b> for its law or to delete it.</li>
+<li>Click or drag on empty space to <b>scrub</b> the master (the cursor line).</li>
+</ul>
+<p class="note">Every edit can be undone (<kbd>Ctrl</kbd>+<kbd>Z</kbd>); a whole drag is one step.</p>
+
+<h2><a name="closed"></a>Closed and open profiles</h2>
+<ul>
+<li><b>Closed</b> profiles return to the start every revolution (the last knot is tied to knot 0): pushers,
+cams, oscillators.</li>
+<li><b>Open</b> profiles advance by <i>end − start</i> every cycle: index feeds and conveyors.</li>
+<li>A timeline axis must start and end at rest.</li>
+</ul>
+
+<h2><a name="table"></a>The Segments table</h2>
+<p align="center"><img src="images/segments.png" width="820"></p>
+<p class="caption">The Segments table of the flying saw's carriage: one row per segment.</p>
+<p>One row per segment. Pick the law in the first column; double-click a cell to type an exact end, span,
+position or rise. <b>Split</b> and <b>Delete</b> work on the selected row.</p>
+
+<h2><a name="lock"></a>Locking</h2>
+<p>The <b>lock</b> in the diagram's bar (or <b>Edit › Lock profile</b>, <kbd>Ctrl</kbd>+<kbd>L</kbd>) guards the
+profile against accidental edits. While it is locked, knots and pulses can't be dragged, double-click and right-click
+don't split, delete or change laws, and the Segments and Outputs tables are read-only. Scrubbing, zoom, pan, undo / redo and
+<b>Run</b> still work, and the pages in the detail pane are not locked.</p>
+<ul>
+<li>A project <b>opened</b> from a file, a bundled example or a <b>download</b> from the board starts <b>locked</b>:
+look first, unlock to change it.</li>
+<li>A <b>new</b> project or one from the guided setup starts <b>unlocked</b>.</li>
+</ul>
+<p>The lock is not saved in the file.</p>
+
+<h2><a name="analysis"></a>Analysis</h2>
+<p align="center"><img src="images/analysis.png" width="760"></p>
+<p class="caption">The Analysis page: the peaks, motor speed and warnings of the selected axis.</p>
+<p>For the selected axis, at the master speed:</p>
+<ul>
+<li><b>Stroke</b>, <b>peak velocity</b>, <b>acceleration</b> and <b>jerk</b> (with where they happen);</li>
+<li><b>Motor peak</b> (rpm) and <b>step rate</b> (kHz): check them against the motor's rating;</li>
+<li>on the crank, the motor/master counts <b>ratio</b>, the <b>advance</b> per revolution, the cam's largest
+<b>pressure angle</b> and smallest <b>curvature radius</b>; on the timeline, the duration and the highest
+safe <b>speed override</b>;</li>
+<li><b>Warnings</b>: velocity steps (infinite acceleration: a hard knock), acceleration steps (infinite jerk),
+pressure angle above 30° and undercut, motor connectors used twice, speeds above the limits.</li>
+</ul>
+<p>The diagram marks each problem where it happens: a <b>warning sign</b> over the curve and a dashed line down through the plots, red for an error (a velocity step, a velocity or acceleration over the axis's limit) and amber for a warning (an acceleration step, a spline overshoot, a pressure angle above 30°, undercut). Hover over the sign for what it is and what to do.</p>
+<p align="center"><img src="images/diagram_problems.png" width="820"></p>
+<p class="caption">A pusher with a Linear rise and a Harmonic return: velocity steps (red) where the rise starts and stops, acceleration steps (amber) at the ends of the return, and the return's velocity over the axis's limit (red).</p>
+
+<h2><a name="axes"></a>Several axes</h2>
+<p><a name="import"></a><b>Axis › Import points as spline</b> replaces the axis's segments with a
+<a href="05-laws.html">Cubic spline</a> through the points in a file: a CSV or text file with the master value in
+the first column and the position in the second (a table from File › Export reads back too; lines starting with #,
+and a heading line, are skipped). The values in the first column map onto the axis: first to last is the whole
+revolution on the crank, and the duration on the timeline. Up to 65 points become knots; with more, the Workbench
+picks the 65 that keep the curve closest, and says how far it ends up from your points. If the last position equals
+the first the axis is closed, otherwise open. One undo puts the axis back. Try it with
+<code>samples/spline_points.csv</code>.</p>
+
+<p><b>Axis › Add axis</b> (or Duplicate) adds a follower; each needs its own motor connector. Pick the axis in
+the diagram's <b>Axis</b> list (or the Axis page). Every crank axis shares the crank, every timeline axis the
+timeline.</p>
+<p>Which law to use? See <a href="05-laws.html">Motion laws</a>.</p>

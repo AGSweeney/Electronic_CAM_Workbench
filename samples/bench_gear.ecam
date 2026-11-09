@@ -1,0 +1,45 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "drivenCrank",
+        "countsPerRev": 4000,
+        "rpm": 40,
+        "crankConnector": 0,
+        "crankRampRpmPerSec": 120,
+        "crankMaxRpm": 150,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Feed",
+            "master": "crank",
+            "units": "rev",
+            "connector": 1,
+            "countsPerUnit": 800,
+            "velMax": 15,
+            "accMax": 400,
+            "startPos": 0,
+            "closed": false,
+            "baseRadius": 2,
+            "rollerRadius": 0.3,
+            "gear": true,
+            "gearNum": 3,
+            "gearDen": 2,
+            "segments": [
+                {
+                    "endDeg": 360,
+                    "endPos": 1.5,
+                    "law": "linear"
+                }
+            ]
+        }
+    ]
+}

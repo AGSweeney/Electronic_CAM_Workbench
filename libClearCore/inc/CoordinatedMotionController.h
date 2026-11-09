@@ -1,0 +1,851 @@
+/*
+ * Copyright (c) 2026 Adam G. Sweeney <agsweeney@gmail.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/**
+    \file CoordinatedMotionController.h
+    ClearCore Coordinated Motion Controller
+
+    This class manages coordinated motion between two motors, enabling
+    continuous arc moves with smooth transitions. The path is always planned
+    in Cartesian X/Y; SetKinematics() chooses how it maps onto the motors
+    (plain X/Y, or CoreXY / H-bot).
+**/
+
+#ifndef __COORDINATEDMOTIONCONTROLLER_H__
+#define __COORDINATEDMOTIONCONTROLLER_H__
+
+#include <stdint.h>
+#include "ArcInterpolator.h"
+#include "CoordinatedKinematics.h"
+#include "LinearInterpolator.h"
+#include "UnitConverter.h"
+
+namespace ClearCore {
+
+// Forward declaration
+class MotorDriver;
+
+/**
+    \class CoordinatedMotionController
+    \brief Controller for coordinated motion between two motors
+
+    This class provides high-level control for coordinated arc motion,
+    managing arc queues and integrating with the motor control system.
+**/
+class CoordinatedMotionController {
+public:
+    /**
+        \brief Constructor
+    **/
+    CoordinatedMotionController();
+
+    /**
+        \brief Initialize with two motor references
+        
+        \param[in] motorX Pointer to X-axis motor
+        \param[in] motorY Pointer to Y-axis motor
+        
+        \return true if initialization successful
+    **/
+    bool Initialize(MotorDriver* motorX, MotorDriver* motorY);
+
+    /**
+        \brief Choose how the X/Y path maps onto the two motors.
+
+        KINEMATICS_CARTESIAN (the default): the first motor given to
+        Initialize() is X, the second Y.
+
+        KINEMATICS_COREXY: the first motor is A and the second B, with
+        A = X + Y and B = X - Y in steps (H-bot uses the same equations).
+        Every move, position and speed in this class stays Cartesian; only
+        the steps sent to the motors change. Both motors must have the same
+        steps per unit, so if SetMechanicalParamsX/Y were both given they
+        must match. The fastest motor runs up to sqrt(2) times the path speed
+        (on a 45-degree move), and accelerates up to sqrt(2) times the path
+        acceleration; use MotorVelMax() to keep each motor within its limit.
+
+        Change it only while stopped with nothing queued. It does not touch
+        the position: call SetPosition() or SyncPositionFromMotors() after.
+
+        \param[in] kinematics KINEMATICS_CARTESIAN or KINEMATICS_COREXY
+        \return false if motion is active or queued, or the X and Y
+                mechanical parameters differ for CoreXY
+    **/
+    bool SetKinematics(CoordKinematics kinematics);
+
+    /**
+        \brief The current kinematics (see SetKinematics()).
+    **/
+    CoordKinematics Kinematics() const {
+        return m_kinematics;
+    }
+
+    /**
+        \brief Set a per-motor speed limit for coordinated moves.
+
+        Each queued segment's path speed is lowered so that neither motor
+        exceeds velMax steps/s anywhere on it. This matters for CoreXY, where
+        a motor can run sqrt(2) times faster than the path; in Cartesian no
+        motor runs faster than the path, so it only takes effect when set
+        below ArcVelMax(). 0 (the default) means no limit. Applies to moves
+        queued after the call.
+
+        \param[in] velMax Maximum motor speed in steps/sec (0 = no limit)
+    **/
+    void MotorVelMax(uint32_t velMax) {
+        m_motorVelMax = velMax;
+    }
+
+    /**
+        \brief The per-motor speed limit (steps/sec, 0 = none).
+    **/
+    uint32_t MotorVelMax() const {
+        return m_motorVelMax;
+    }
+
+    /**
+        \brief Set the X/Y position from the motors' commanded positions.
+
+        Use after moving the motors on their own (homing, jogging), which the
+        controller does not track. Cartesian: X and Y are the two motors'
+        PositionRefCommanded(). CoreXY: X = (A + B) / 2, Y = (A - B) / 2.
+
+        \return false if not initialized or motion is active or queued, or
+                (CoreXY) A + B is odd, so the head is half a step off the X/Y
+                grid; the position is still set, X rounded down. Moves are
+                relative, so motor B then stays one step off X - Y until a
+                single-motor move of one step puts A + B back on even.
+    **/
+    bool SyncPositionFromMotors();
+
+    /**
+        \brief Issue a single arc move
+        
+        \param[in] centerX Arc center X position in steps
+        \param[in] centerY Arc center Y position in steps
+        \param[in] radius Arc radius in steps
+        \param[in] startAngle Start angle in radians
+        \param[in] endAngle End angle in radians
+        \param[in] clockwise Direction (true = clockwise)
+        
+        \return true if arc command accepted
+    **/
+    bool MoveArc(int32_t centerX, int32_t centerY,
+                 int32_t radius,
+                 double startAngle, double endAngle,
+                 bool clockwise);
+
+    /**
+        \brief Issue a continuous arc (chains from current position)
+        
+        \param[in] centerX Arc center X position in steps
+        \param[in] centerY Arc center Y position in steps
+        \param[in] radius Arc radius in steps
+        \param[in] endAngle End angle in radians
+        \param[in] clockwise Direction (true = clockwise)
+        
+        \return true if arc command accepted
+    **/
+    bool MoveArcContinuous(int32_t centerX, int32_t centerY,
+                          int32_t radius,
+                          double endAngle,
+                          bool clockwise);
+    
+    /**
+        \brief Queue an arc move (can chain from any motion type)
+        
+        This method allows chaining an arc move after a linear move or another arc.
+        The arc will start smoothly from the current position when the previous
+        motion completes.
+        
+        \param[in] centerX Arc center X position in steps
+        \param[in] centerY Arc center Y position in steps
+        \param[in] radius Arc radius in steps
+        \param[in] startAngle Start angle in radians (from arc center to start point; must match
+                             the segment that was parsed into the motion block — recomputing from
+                             queued step endpoints can drift vs. I/J geometry and yield wrong span)
+        \param[in] endAngle End angle in radians (from arc center to end point)
+        \param[in] clockwise Direction (true = clockwise)
+        
+        \return true if arc command accepted
+    **/
+    bool QueueArc(int32_t centerX, int32_t centerY,
+                 int32_t radius,
+                 double startAngle,
+                 double endAngle,
+                 bool clockwise);
+
+    /**
+        \brief Queue an arc to an exact end point.
+
+        Like QueueArc, but the caller gives the end point instead of a radius
+        and angles. The start is wherever the queue will be when the arc runs
+        (the previous move's end, or the current position). The arc lands on
+        endX/endY exactly, even when the radius is not a whole number of steps
+        (QueueArc rebuilds the end point from a rounded radius, which can miss
+        by a step on a diagonal arc). endX/endY must lie on the circle through
+        the start around the centre to within a few steps.
+
+        \param[in] centerX Arc center X position in steps
+        \param[in] centerY Arc center Y position in steps
+        \param[in] endX Ending X position in steps
+        \param[in] endY Ending Y position in steps
+        \param[in] clockwise Direction (true = clockwise)
+        \return true if arc command accepted
+    **/
+    bool QueueArcTo(int32_t centerX, int32_t centerY, int32_t endX, int32_t endY, bool clockwise);
+
+    /**
+        \brief Maximum number of segments the planner queue can hold.
+        Use this to cap the batch size in the host firmware so it never tries to submit
+        more segments than fit, which would cause QueueArc/QueueLinear to fail.
+    **/
+    uint8_t PlannerQueueCapacity() const {
+        return ARC_QUEUE_SIZE;
+    }
+
+    /**
+        \brief When true, QueueArc/QueueLinear (planner path) only enqueue; call
+        StartDeferredMotionIfPending() after batching so RecalculatePlanner sees
+        the full chain (smoother arc quadrants, etc.). Default false.
+    **/
+    void SetDeferMotionQueueStart(bool defer) {
+        m_deferQueueStart = defer;
+    }
+
+    /**
+        \brief Start first queued motion if idle and queue non-empty (after batch enqueue).
+        \return true if motion started
+    **/
+    bool StartDeferredMotionIfPending();
+    
+    /**
+        \brief Queue a linear move (can chain from any motion type)
+        
+        This method allows chaining a linear move after an arc move or another linear.
+        The linear move will start smoothly from the current position when the previous
+        motion completes.
+        
+        \param[in] endX Ending X position in steps
+        \param[in] endY Ending Y position in steps
+        
+        \return true if move command accepted
+    **/
+    bool QueueLinear(int32_t endX, int32_t endY);
+
+    /**
+        \brief Issue a coordinated linear move
+        
+        \param[in] endX Ending X position in steps
+        \param[in] endY Ending Y position in steps
+        
+        \return true if move command accepted
+    **/
+    bool MoveLinear(int32_t endX, int32_t endY);
+    
+    /**
+        \brief Issue a coordinated linear move (absolute)
+        
+        \param[in] startX Starting X position in steps
+        \param[in] startY Starting Y position in steps
+        \param[in] endX Ending X position in steps
+        \param[in] endY Ending Y position in steps
+        
+        \return true if move command accepted
+    **/
+    bool MoveLinearAbsolute(int32_t startX, int32_t startY,
+                           int32_t endX, int32_t endY);
+    
+    /**
+        \brief Issue a continuous linear move (chains from current position)
+        
+        \param[in] endX Ending X position in steps
+        \param[in] endY Ending Y position in steps
+        
+        \return true if move command accepted
+    **/
+    bool MoveLinearContinuous(int32_t endX, int32_t endY);
+
+    /**
+        \brief Set maximum velocity for coordinated motion
+        
+        Applies to both arc and linear coordinated moves. This sets the velocity
+        along the path (tangential velocity for arcs, linear velocity for straight moves).
+        
+        \param[in] velMax Maximum velocity in steps/sec
+    **/
+    void ArcVelMax(uint32_t velMax) {
+        m_velocityMax = velMax;
+    }
+
+    /**
+        \brief Set maximum acceleration for coordinated motion
+        
+        Applies to both arc and linear coordinated moves.
+        
+        \param[in] accelMax Maximum acceleration in steps/sec²
+    **/
+    void ArcAccelMax(uint32_t accelMax) {
+        m_accelMax = accelMax;
+    }
+
+    /**
+        \brief Stop motion immediately
+    **/
+    void Stop();
+
+    /**
+        \brief Stop motion with deceleration
+    **/
+    void StopDecel();
+
+    /**
+        \brief Check if coordinated motion is active
+        
+        \return true if motion is active
+        \note Reads volatile variable - safe to call from any context
+    **/
+    bool IsActive() const {
+        return m_active;  // Read volatile variable
+    }
+
+    /**
+        \brief Check if all arcs are complete
+        
+        \return true if no arcs remaining in legacy arc queue
+        \note This checks the legacy arc queue only. For unified queue,
+              use MotionQueueCount() == 0 && !IsActive() instead.
+    **/
+    bool ArcComplete() const {
+        return !m_active && m_arcQueueCount == 0;  // Read volatile variables
+    }
+
+    /**
+        \brief Get current X position
+        
+        \return Current X position in steps
+        \note Reads volatile variable - safe to call from any context
+    **/
+    int32_t CurrentX() const {
+        return m_currentX;  // Read volatile variable
+    }
+
+    /**
+        \brief Get current Y position
+        
+        \return Current Y position in steps
+        \note Reads volatile variable - safe to call from any context
+    **/
+    int32_t CurrentY() const {
+        return m_currentY;  // Read volatile variable
+    }
+
+    /**
+        \brief Set current position (for homing/initialization)
+        
+        \param[in] x X position in steps
+        \param[in] y Y position in steps
+        \note Protected with critical section to prevent race with ISR
+    **/
+    void SetPosition(int32_t x, int32_t y);
+
+    /**
+        \brief ISR callback - called from MotorDriver::Refresh()
+        
+        This function generates and applies coordinated steps.
+        Must be called at the sample rate (5 kHz).
+    **/
+    void UpdateFast();
+
+    /**
+        \brief Get number of arcs in queue
+        
+        \return Number of arcs queued in legacy arc queue
+        \note This returns the legacy arc queue count only. For unified queue,
+              use MotionQueueCount() instead.
+    **/
+    uint8_t QueueCount() const {
+        return m_arcQueueCount;  // Read volatile variable
+    }
+    
+    /**
+        \brief Get total number of motions in unified queue
+        
+        \return Total number of motions queued (arcs + linear)
+    **/
+    uint8_t MotionQueueCount() const {
+        return m_motionQueueCount;  // Read volatile variable
+    }
+
+    /** ClearHPGL diagnostics: a sample that asked for an unusually large step count. **/
+    struct BurstEvent {
+        uint32_t ms;
+        uint8_t path;      // 0 normal step, 1 end-of-segment clamp
+        uint8_t queued;    // planner blocks waiting
+        int32_t stepsX;
+        int32_t stepsY;
+        int32_t startX, startY, endX, endY;
+        int32_t lastX, lastY;  // emitted position before this sample
+        uint32_t entry, exitSpeed, nominal;
+    };
+    static const uint8_t BURST_LOG_SIZE = 8;
+    static const int32_t BURST_THRESHOLD = 16;
+    /** Copies up to max newest-first events; returns how many. **/
+    uint8_t BurstLog(BurstEvent *out, uint8_t max) const;
+    uint32_t BurstCount() const {
+        return m_burstCount;
+    }
+    /** ClearHPGL timing probe (CPU cycles, 120 MHz): longest interrupts-off stretch in
+        QueueLinear/QueueArc; longest gap between UpdateFast calls while moving (nominal 24000 =
+        200 us) and how many were over 250 us; longest single UpdateFast and what it did
+        (MaxUpdateKind: bit 0 = arc, bit 1 = started the next move), and how many took over
+        150 us. An UpdateFast near 200 us misses the step compare: a motor jump. **/
+    uint32_t MaxIrqOffCycles() const { return m_maxIrqOffCycles; }
+    uint32_t MaxUpdateGapCycles() const { return m_maxUpdateGapCycles; }
+    uint32_t LateUpdates() const { return m_lateUpdates; }
+    uint32_t MaxUpdateCycles() const { return m_maxUpdateCycles; }
+    uint8_t MaxUpdateKind() const { return m_maxUpdateKind; }
+    uint32_t SlowUpdates() const { return m_slowUpdates; }
+    void ResetTimingProbe() {
+        m_maxIrqOffCycles = 0;
+        m_maxUpdateGapCycles = 0;
+        m_lateUpdates = 0;
+        m_maxUpdateCycles = 0;
+        m_maxUpdateKind = 0;
+        m_slowUpdates = 0;
+    }
+
+    // ========== Unit Conversion Support ==========
+    
+    /**
+        \brief Set mechanical parameters for X-axis motor
+        
+        \param[in] stepsPerRev Motor steps per revolution
+        \param[in] pitch Lead screw pitch
+        \param[in] pitchUnit Units for pitch
+        \param[in] gearRatio Gear ratio (default 1.0)
+        
+        \return true if configuration successful
+    **/
+    bool SetMechanicalParamsX(uint32_t stepsPerRev, double pitch,
+                             UnitType pitchUnit, double gearRatio = 1.0);
+    
+    /**
+        \brief Set mechanical parameters for Y-axis motor
+        
+        \param[in] stepsPerRev Motor steps per revolution
+        \param[in] pitch Lead screw pitch
+        \param[in] pitchUnit Units for pitch
+        \param[in] gearRatio Gear ratio (default 1.0)
+        
+        \return true if configuration successful
+    **/
+    bool SetMechanicalParamsY(uint32_t stepsPerRev, double pitch,
+                              UnitType pitchUnit, double gearRatio = 1.0);
+    
+    /**
+        \brief Move arc in inches
+        
+        \param[in] centerX Arc center X position in inches
+        \param[in] centerY Arc center Y position in inches
+        \param[in] radius Arc radius in inches
+        \param[in] startAngle Start angle in radians
+        \param[in] endAngle End angle in radians
+        \param[in] clockwise Direction (true = clockwise)
+        
+        \return true if arc command accepted
+    **/
+    bool MoveArcInches(double centerX, double centerY, double radius,
+                      double startAngle, double endAngle, bool clockwise);
+    
+    /**
+        \brief Move arc in millimeters
+        
+        \param[in] centerX Arc center X position in mm
+        \param[in] centerY Arc center Y position in mm
+        \param[in] radius Arc radius in mm
+        \param[in] startAngle Start angle in radians
+        \param[in] endAngle End angle in radians
+        \param[in] clockwise Direction (true = clockwise)
+        
+        \return true if arc command accepted
+    **/
+    bool MoveArcMM(double centerX, double centerY, double radius,
+                   double startAngle, double endAngle, bool clockwise);
+    
+    /**
+        \brief Move linear in inches
+        
+        \param[in] endX Ending X position in inches
+        \param[in] endY Ending Y position in inches
+        
+        \return true if move command accepted
+    **/
+    bool MoveLinearInches(double endX, double endY);
+    
+    /**
+        \brief Move linear in millimeters
+        
+        \param[in] endX Ending X position in mm
+        \param[in] endY Ending Y position in mm
+        
+        \return true if move command accepted
+    **/
+    bool MoveLinearMM(double endX, double endY);
+    
+    /**
+        \brief Set feed rate for coordinated motion in inches per minute
+        
+        Applies to both arc and linear coordinated moves.
+        
+        \param[in] feedRate Feed rate in inches per minute
+    **/
+    void FeedRateInchesPerMin(double feedRate);
+    
+    /**
+        \brief Set feed rate for coordinated motion in millimeters per minute
+        
+        Applies to both arc and linear coordinated moves.
+        
+        \param[in] feedRate Feed rate in millimeters per minute
+    **/
+    void FeedRateMMPerMin(double feedRate);
+    
+    /**
+        \brief Set feed rate for coordinated motion in millimeters per second
+        
+        Applies to both arc and linear coordinated moves.
+        
+        \param[in] feedRate Feed rate in millimeters per second
+    **/
+    void FeedRateMMPerSec(double feedRate);
+
+    /**
+        \brief Set junction deviation in steps for cornering speed (GRBL-style angle method).
+        Used as a fallback when dVmax is zero.
+    **/
+    void JunctionDeviationSteps(double deviationSteps) {
+        m_junctionDeviationSteps = deviationSteps;
+    }
+
+    /**
+        \brief Set maximum per-axis velocity delta allowed at segment junctions (Centroid dVmax).
+
+        At each junction the velocity change vector is Δv⃗ = v_junction × (entryDir − exitDir).
+        This cap limits how fast each individual axis may change speed at a corner, independent
+        of the inter-segment angle.  The junction speed is:
+
+            v_junction ≤ dVmax / max(|ΔdirX|, |ΔdirY|)
+
+        The limit is per motor, so with KINEMATICS_COREXY the divisor is
+        |ΔdirX| + |ΔdirY| (the larger of the A and B changes).
+
+        A smaller value gives smoother corners with more deceleration; a larger value allows
+        the machine to carry more speed through sharp turns.  Set to 0 to use only the
+        GRBL angle-based junction deviation formula instead.
+
+        \param[in] dVmaxStepsPerSec  Maximum axis velocity delta in steps/sec (0 = disabled)
+    **/
+    void JunctionDVmax(uint32_t dVmaxStepsPerSec) {
+        m_junctionDVmax = dVmaxStepsPerSec;
+    }
+
+    /**
+        \brief Get current dVmax junction speed cap (steps/sec, 0 = disabled)
+    **/
+    uint32_t JunctionDVmax() const {
+        return m_junctionDVmax;
+    }
+
+    /**
+        \brief Configure queue-end behavior for planned motion
+
+        When disabled (default), the planner favors continuous motion and avoids
+        forcing a stop at the tail block so additional queued moves can blend in.
+        When enabled, the planner enforces stop-at-end behavior.
+
+        \param[in] stopAtQueueEnd true to enforce stop at queue end
+    **/
+    void StopAtQueueEnd(bool stopAtQueueEnd) {
+        m_stopAtQueueEnd = stopAtQueueEnd;
+    }
+
+    /**
+        \brief Get queue-end stop policy
+
+        \return true if stop-at-end policy is enabled
+    **/
+    bool StopAtQueueEnd() const {
+        return m_stopAtQueueEnd;
+    }
+    
+    /**
+        \brief Get current X position in inches
+        
+        \return Current X position in inches
+    **/
+    double CurrentXInches() const;
+    
+    /**
+        \brief Get current Y position in inches
+        
+        \return Current Y position in inches
+    **/
+    double CurrentYInches() const;
+    
+    /**
+        \brief Get current X position in millimeters
+        
+        \return Current X position in millimeters
+    **/
+    double CurrentXMM() const;
+    
+    /**
+        \brief Get current Y position in millimeters
+        
+        \return Current Y position in millimeters
+    **/
+    double CurrentYMM() const;
+    
+    /**
+        \brief Get debug information about current motion
+        
+        \param[out] stepsRemaining Remaining steps in current move
+        \param[out] currentX Current X position in steps
+        \param[out] currentY Current Y position in steps
+        
+        \return true if motion is active, false otherwise
+    **/
+    bool GetDebugInfo(uint32_t& stepsRemaining, int32_t& currentX, int32_t& currentY) const;
+
+private:
+    // Must be >= firmware MOTION_QUEUE_SIZE so a full firmware chain fits in one planner batch.
+    // Smaller values cause batch-boundary full-stops mid-program (each new batch restarts at
+    // entrySpeed = 0, producing a visible hesitation at the junction between batches).
+    static const uint8_t ARC_QUEUE_SIZE = 16;
+    
+    enum MotionType {
+        MOTION_TYPE_NONE,
+        MOTION_TYPE_ARC,
+        MOTION_TYPE_LINEAR
+    };
+    
+    // Unified motion queue entry
+    enum QueuedMotionType {
+        QUEUED_MOTION_ARC,
+        QUEUED_MOTION_LINEAR
+    };
+    
+    struct QueuedMotion {
+        QueuedMotionType type;
+        // Planner data (steps/sec and steps)
+        uint32_t nominalSpeed;
+        uint32_t entrySpeed;
+        uint32_t exitSpeed;
+        uint32_t lengthSteps;
+        float entryDirX;
+        float entryDirY;
+        float exitDirX;
+        float exitDirY;
+        int32_t startX;
+        int32_t startY;
+        int32_t endX;
+        int32_t endY;
+        union {
+            struct {
+                int32_t centerX;
+                int32_t centerY;
+                int32_t radius;
+                double startAngle;
+                double endAngle;
+                bool clockwise;
+            } arc;
+            struct {
+                int32_t endX;
+                int32_t endY;
+            } linear;
+        };
+        bool valid;
+    };
+    
+    MotorDriver* m_motorX;
+    MotorDriver* m_motorY;
+    CoordKinematics m_kinematics = KINEMATICS_CARTESIAN;
+    uint32_t m_motorVelMax = 0;  // per-motor speed cap (steps/s); 0 = none
+    bool m_outputThisSample = false;  // UpdateFast: this sample's steps were written
+    // Send one sample's Cartesian steps to the motors through the kinematics.
+    void OutputSteps(int32_t stepsX, int32_t stepsY);
+    // Path speed for a segment, lowered so no motor exceeds m_motorVelMax.
+    uint32_t LinearSpeed(int32_t dx, int32_t dy) const;
+    uint32_t ArcSpeed(double startAngle, double span, bool clockwise) const;
+    
+    ArcInterpolator m_arcInterpolator;
+    LinearInterpolator m_linearInterpolator;
+    // ClearHPGL: build queue blocks with interrupts enabled (see QueueStartPoint in the .cpp).
+    bool QueueStartPoint(int32_t *startX, int32_t *startY);
+    void CommitQueuedMotion();
+    void NoteIrqOff(uint32_t irqOffStart);
+    // QueueArcTo hands its exact end point to QueueArc through these.
+    bool m_exactEndPending = false;
+    int32_t m_exactEndX = 0;
+    int32_t m_exactEndY = 0;
+    
+    // Unified motion queue (can hold both arcs and linear moves)
+    // NOTE: Queue variables marked volatile because they're accessed from both
+    // ISR context (UpdateFast) and main thread context (QueueArc/QueueLinear)
+    QueuedMotion m_motionQueue[ARC_QUEUE_SIZE];
+    // ClearHPGL: planner works on a snapshot with interrupts enabled (see PlanQueue()).
+    QueuedMotion m_planWork[ARC_QUEUE_SIZE];
+    uint8_t m_planHead;
+    uint8_t m_planCount;
+    uint8_t m_planPlanned;
+    volatile uint8_t m_motionQueueHead;
+    volatile uint8_t m_motionQueueTail;
+    volatile uint8_t m_motionQueueCount;
+    uint8_t m_motionQueuePlanned;  // Optimization: Points to first block after last optimally planned block (only used when kUseGrblPlanner = true)
+    
+    // Legacy separate queues (for backward compatibility)
+    struct QueuedArc {
+        int32_t centerX;
+        int32_t centerY;
+        int32_t radius;
+        double endAngle;
+        bool clockwise;
+        volatile bool valid;  // Valid flag accessed from ISR
+    };
+    
+    struct QueuedLinear {
+        int32_t endX;
+        int32_t endY;
+        volatile bool valid;  // Valid flag accessed from ISR
+    };
+    
+    QueuedArc m_arcQueue[ARC_QUEUE_SIZE];
+    QueuedLinear m_linearQueue[ARC_QUEUE_SIZE];
+    volatile uint8_t m_arcQueueHead;
+    volatile uint8_t m_arcQueueTail;
+    volatile uint8_t m_arcQueueCount;
+    volatile uint8_t m_linearQueueHead;
+    volatile uint8_t m_linearQueueTail;
+    volatile uint8_t m_linearQueueCount;
+    
+    // State
+    // NOTE: m_active and m_motionType accessed from both ISR and main thread
+    volatile bool m_active;
+    bool m_initialized;
+    volatile MotionType m_motionType;
+    double m_junctionDeviationSteps;
+    uint32_t m_junctionDVmax;       // Per-axis max delta-V at junctions (steps/sec); 0 = use angle method
+    volatile bool m_stopAtQueueEnd;
+    BurstEvent m_burstLog[BURST_LOG_SIZE];
+    volatile uint32_t m_burstCount;
+    volatile uint32_t m_maxIrqOffCycles;
+    volatile uint32_t m_maxUpdateGapCycles;
+    volatile uint32_t m_lateUpdates;
+    uint32_t m_lastUpdateCycles;
+    volatile uint32_t m_maxUpdateCycles = 0;
+    volatile uint8_t m_maxUpdateKind = 0;
+    volatile uint32_t m_slowUpdates = 0;
+    bool m_prevUpdateDriving = false;
+    bool m_updateStartedMotion = false;
+    void UpdateFastBody();
+    void RecordBurst(int32_t stepsX, int32_t stepsY);
+    bool m_deferQueueStart;
+    int32_t m_activeTargetX;
+    int32_t m_activeTargetY;
+
+    void RecalculatePlanner();
+    void PlanQueue();
+    volatile uint8_t m_stopCounter;  // Counter to continue sending zero steps after completion
+    volatile int32_t m_currentX;  // Position updated from ISR, read from main thread
+    volatile int32_t m_currentY;  // Position updated from ISR, read from main thread
+    double m_currentAngle; // Current angle in radians
+    
+    // Motion parameters
+    uint32_t m_velocityMax;
+    uint32_t m_accelMax;
+    
+    // Unit conversion support
+    MotorMechanicalConfig m_mechanicalConfigX;
+    MotorMechanicalConfig m_mechanicalConfigY;
+    bool m_unitsConfiguredX;
+    bool m_unitsConfiguredY;
+    
+    /**
+        \brief Process next arc from queue
+    **/
+    bool ProcessNextArc();
+    
+    /**
+        \brief Calculate start angle for continuous arc
+        
+        \param[in] centerX Arc center X
+        \param[in] centerY Arc center Y
+        
+        \return Start angle in radians
+    **/
+    double CalculateStartAngle(int32_t centerX, int32_t centerY) const;
+    
+    /**
+        \brief Validate arc parameters
+        
+        \param[in] centerX Arc center X
+        \param[in] centerY Arc center Y
+        \param[in] radius Arc radius
+        
+        \return true if parameters are valid
+    **/
+    bool ValidateArc(int32_t centerX, int32_t centerY, int32_t radius) const;
+    
+    /**
+        \brief Process next linear move from queue
+    **/
+    bool ProcessNextLinear();
+    
+    /**
+        \brief Validate linear move parameters
+        
+        \param[in] endX Ending X position
+        \param[in] endY Ending Y position
+        
+        \return true if parameters are valid
+    **/
+    bool ValidateLinear(int32_t endX, int32_t endY) const;
+    
+    /**
+        \brief Process next motion from unified queue (arc or linear)
+    **/
+    bool ProcessNextMotion();
+
+    /**
+        \brief Clear interpolators and internal queues without MoveStopAbrupt on motors.
+
+        MoveLinear/MoveArc previously called Stop() before every segment; Stop() always
+        issued MoveStopAbrupt on M0/M1 even when already idle. That perturbs ClearPath
+        closed-loop tracking between back-to-back G01 blocks and can trip following-error.
+    **/
+    void ResetPlannerStateWithoutMotorStop();
+};
+
+} // ClearCore namespace
+
+#endif // __COORDINATEDMOTIONCONTROLLER_H__

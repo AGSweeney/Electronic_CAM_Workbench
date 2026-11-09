@@ -1,0 +1,143 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "drivenCrank",
+        "countsPerRev": 8000,
+        "crankPpr": 800,
+        "crankGearNum": 10,
+        "crankGearDen": 1,
+        "rpm": 32,
+        "crankConnector": 3,
+        "crankRampRpmPerSec": 20,
+        "crankMaxRpm": 600,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Carton pusher",
+            "master": "crank",
+            "units": "mm",
+            "connector": 0,
+            "drive": "ballscrew",
+            "motorPpr": 800,
+            "screwPitch": 10,
+            "countsPerUnit": 80,
+            "velMax": 600,
+            "accMax": 8000,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 170,
+            "rollerRadius": 14,
+            "segments": [
+                {
+                    "endDeg": 60,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 150,
+                    "endPos": 120,
+                    "law": "modsine"
+                },
+                {
+                    "endDeg": 200,
+                    "endPos": 120,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 300,
+                    "endPos": 0,
+                    "law": "poly4567"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        },
+        {
+            "name": "Gripper",
+            "master": "crank",
+            "units": "deg",
+            "connector": 1,
+            "drive": "direct",
+            "motorPpr": 800,
+            "countsPerUnit": 2.2222222222222223,
+            "velMax": 900,
+            "accMax": 20000,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 60,
+            "rollerRadius": 8,
+            "segments": [
+                {
+                    "endDeg": 40,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 85,
+                    "endPos": 30,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 170,
+                    "endPos": 30,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 215,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        },
+        {
+            "name": "Index feed",
+            "master": "crank",
+            "units": "mm",
+            "connector": 2,
+            "drive": "belt",
+            "motorPpr": 800,
+            "pulleyPd": 30,
+            "countsPerUnit": 8.48826363156775,
+            "velMax": 400,
+            "accMax": 6000,
+            "startPos": 0,
+            "closed": false,
+            "baseRadius": 70,
+            "rollerRadius": 8,
+            "segments": [
+                {
+                    "endDeg": 200,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 330,
+                    "endPos": 50,
+                    "law": "modtrap"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 50,
+                    "law": "dwell"
+                }
+            ]
+        }
+    ]
+}

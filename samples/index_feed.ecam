@@ -1,0 +1,37 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": { "countsPerRev": 4000, "rpm": 60 },
+    "axes": [
+        {
+            "name": "Feed",
+            "units": "mm",
+            "countsPerUnit": 800,
+            "startPos": 0,
+            "closed": false,
+            "baseRadius": 40,
+            "rollerRadius": 8,
+            "segments": [
+                { "endDeg": 90,  "endPos": 0,  "law": "dwell" },
+                { "endDeg": 210, "endPos": 25, "law": "modsine" },
+                { "endDeg": 360, "endPos": 25, "law": "dwell" }
+            ]
+        },
+        {
+            "name": "Knife",
+            "units": "mm",
+            "countsPerUnit": 800,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 30,
+            "rollerRadius": 6,
+            "segments": [
+                { "endDeg": 220, "endPos": 0,  "law": "dwell" },
+                { "endDeg": 260, "endPos": 15, "law": "linear" },
+                { "endDeg": 300, "endPos": 15, "law": "dwell" },
+                { "endDeg": 340, "endPos": 0,  "law": "harmonic" },
+                { "endDeg": 360, "endPos": 0,  "law": "dwell" }
+            ]
+        }
+    ]
+}

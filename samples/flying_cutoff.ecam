@@ -1,0 +1,107 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "encoder",
+        "countsPerRev": 4000,
+        "crankPpr": 4000,
+        "crankGearNum": 1,
+        "crankGearDen": 1,
+        "rpm": 30,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Shear carriage",
+            "master": "crank",
+            "units": "mm",
+            "connector": 0,
+            "drive": "ballscrew",
+            "motorPpr": 800,
+            "screwPitch": 10,
+            "countsPerUnit": 80,
+            "velMax": 500,
+            "accMax": 5000,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 175,
+            "rollerRadius": 14,
+            "segments": [
+                {
+                    "endDeg": 60,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 150,
+                    "endPos": 30,
+                    "law": "blend"
+                },
+                {
+                    "endDeg": 210,
+                    "endPos": 70,
+                    "law": "linear"
+                },
+                {
+                    "endDeg": 270,
+                    "endPos": 90,
+                    "law": "blend"
+                },
+                {
+                    "endDeg": 355,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        },
+        {
+            "name": "Knife",
+            "master": "crank",
+            "units": "mm",
+            "connector": 1,
+            "drive": "direct",
+            "motorPpr": 800,
+            "countsPerUnit": 100,
+            "velMax": 300,
+            "accMax": 15000,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 40,
+            "rollerRadius": 8,
+            "segments": [
+                {
+                    "endDeg": 160,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 180,
+                    "endPos": 15,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 200,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        }
+    ]
+}

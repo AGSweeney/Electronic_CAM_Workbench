@@ -1,0 +1,43 @@
+<h1>Troubleshooting and safety</h1>
+
+<h2><a name="safety"></a>Safety first</h2>
+<ul>
+<li>The Workbench and its firmware are <b>experimental</b>: not certified for production or safety-critical use.</li>
+<li>Keep a <b>physical emergency stop</b> in the motor power circuit, and wire an estop input (A-9 unless you pick another)
+(Board page, <a href="09-board.html#estop">Estop</a>).</li>
+<li>Run every new profile in <b>Simulate</b> first, then with <b>Hand jog</b>, then slowly.</li>
+<li>Keep motor speeds well inside the motors' ratings (Analysis shows them).</li>
+</ul>
+
+<h2><a name="profile"></a>The profile</h2>
+<table>
+<tr><th>You see</th><th>Do</th></tr>
+<tr><td>Red warning sign at a knot, <i>velocity step</i></td><td>the velocity jumps there (a hard knock): use a law that ends at rest, or a Blend next to a Linear segment</td></tr>
+<tr><td>Amber warning sign at a knot, <i>acceleration step</i></td><td>infinite jerk: use Cycloidal, a polynomial or modified laws instead of Harmonic / Linear</td></tr>
+<tr><td><i>Peak velocity / acceleration &gt; limit</i></td><td>slow the master, lengthen the move, or pick a gentler law</td></tr>
+<tr><td><i>Pressure angle &gt; 30°</i>, <i>undercut</i></td><td>cam drawing only: a larger base radius, a smaller roller</td></tr>
+<tr><td><i>M-n is assigned to … and …</i></td><td>two axes (or the crank motor) on one motor connector</td></tr>
+</table>
+
+<h2><a name="board"></a>The board</h2>
+<table>
+<tr><th>You see</th><th>Do</th></tr>
+<tr><td>Amber <i>firmware …, this app needs …</i></td><td>the board and the app don't match: <a href="09-board.html#firmware">update the firmware</a> from the Board page</td></tr>
+<tr><td>Discover finds nothing</td><td>check the network cable and the PC's address range, or connect over USB: the <a href="09-board.html#network">Network</a> settings on the Board page show the board's address and can change it</td></tr>
+<tr><td>Enable fails, <i>HLFB</i></td><td>the motors did not report ready: check their power and that the profile's connectors have motors</td></tr>
+<tr><td>Status: <i>profile is not this project</i></td><td>Upload again (any change, even to the drawing, changes the hash)</td></tr>
+<tr><td>Status: <i>not kept in flash</i></td><td>the profile is lost at reboot: Upload again</td></tr>
+<tr><td>Encoder counts down</td><td>tick <b>Reverse encoder direction</b> and Upload; do not swap wires</td></tr>
+<tr><td>Trigger greyed</td><td>its tooltip says why: Start first, or the timeline is running</td></tr>
+<tr><td>Cut length refused</td><td>below the shortest piece (the Crank page shows it)</td></tr>
+<tr><td>Profile gone after a firmware update</td><td>the update puts it back; flashing any other way erases it: Upload again</td></tr>
+<tr><td>Start refused: <i>… off its cam position</i></td><td>Axis jog (or a stop part-way through a cycle) left an axis away from where the cam has it: choose <b>Move to cam positions</b> in the window that opens, or move it in <a href="09-board.html#axisjog">Axis jog</a>, then Start</td></tr>
+<tr><td>Start refused: <i>… isn't homed</i></td><td>the axis has <b>Required before Start</b>: <a href="06-axes.html#homing">home it</a> (Home all), then Start</td></tr>
+<tr><td><i>home failed on X: the switch wasn't found within the search length</i></td><td>the switch didn't trip: watch its State on the Inputs page while you move the axis onto it by hand or with Axis jog; check <b>Toward</b>, and that the search length covers the travel</td></tr>
+<tr><td><i>home failed on X: a limit tripped first</i></td><td>the search went the wrong way, or the home switch is beyond the limit: check <b>Toward</b>; the switch wizard proves which side it is on</td></tr>
+<tr><td>The axis runs well past the home switch</td><td>set the homing <b>Decel</b> (or the axis's Acc max), or a lower search speed</td></tr>
+<tr><td>The timeline stops and says <i>Waiting for …</i></td><td>a <a href="03-masters.html#waits">wait</a> holds it: its input isn't at the level it wants. Check the input's State on the Inputs page; with <b>Change</b> ticked it must also go to the other level first. A PLC-bit wait needs the PLC connected and in Run</td></tr>
+<tr><td><i>wait 1 (…) timed out</i></td><td>the input didn't come within the wait's timeout: Fault reset / Clear fault, find why the sensor didn't change, Start again (the axes may need <b>To cam position</b>)</td></tr>
+<tr><td>A panel button does nothing</td><td><b>Operator inputs…</b> shows each input's state live: check it reads <i>Pressed</i> when pushed (NC or NO set right?). Enable, Fault reset and Start are ignored while the PLC has control, and act only when pressed, not when already held at power-up</td></tr>
+<tr><td>Upload refused: <i>… is the operator … input</i></td><td>the project uses a pin the board's operator inputs have: move one or the other (Board, Panel)</td></tr>
+</table>

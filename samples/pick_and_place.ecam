@@ -1,0 +1,184 @@
+{
+    "axes": [
+        {
+            "accMax": 6000,
+            "baseRadius": 40,
+            "closed": true,
+            "connector": 0,
+            "countsPerUnit": 10.025508226261124,
+            "drive": "belt",
+            "duration": 2.4,
+            "master": "timeline",
+            "motorPpr": 800,
+            "name": "X travel",
+            "pulleyPd": 25.4,
+            "rollerRadius": 8,
+            "screwPitch": 5,
+            "segments": [
+                {
+                    "endDeg": 0.5,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 1.1,
+                    "endPos": 250,
+                    "law": "modtrap"
+                },
+                {
+                    "endDeg": 1.6,
+                    "endPos": 250,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 2.2,
+                    "endPos": 0,
+                    "law": "modtrap"
+                },
+                {
+                    "endDeg": 2.4,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ],
+            "startPos": 0,
+            "units": "mm",
+            "velMax": 1000
+        },
+        {
+            "accMax": 12000,
+            "baseRadius": 40,
+            "closed": true,
+            "connector": 1,
+            "countsPerUnit": 53.333333333333336,
+            "drive": "ballscrew",
+            "duration": 2.4,
+            "master": "timeline",
+            "motorPpr": 800,
+            "name": "Z lift",
+            "pulleyPd": 20,
+            "rollerRadius": 8,
+            "screwPitch": 15,
+            "segments": [
+                {
+                    "endDeg": 0.15,
+                    "endPos": -40,
+                    "law": "poly345"
+                },
+                {
+                    "endDeg": 0.3,
+                    "endPos": -40,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 0.5,
+                    "endPos": 0,
+                    "law": "poly345"
+                },
+                {
+                    "endDeg": 1.1,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 1.25,
+                    "endPos": -40,
+                    "law": "poly345"
+                },
+                {
+                    "endDeg": 1.4,
+                    "endPos": -40,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 1.6,
+                    "endPos": 0,
+                    "law": "poly345"
+                },
+                {
+                    "endDeg": 2.4,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ],
+            "startPos": 0,
+            "units": "mm",
+            "velMax": 600
+        },
+        {
+            "accMax": 9000,
+            "baseRadius": 40,
+            "closed": true,
+            "connector": 2,
+            "countsPerUnit": 2.2222222222222223,
+            "drive": "direct",
+            "duration": 2,
+            "master": "timeline",
+            "motorPpr": 800,
+            "name": "Vacuum rotate",
+            "pulleyPd": 20,
+            "rollerRadius": 8,
+            "screwPitch": 5,
+            "segments": [
+                {
+                    "endDeg": 0.55,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 1.05,
+                    "endPos": 90,
+                    "law": "modsine"
+                },
+                {
+                    "endDeg": 1.6,
+                    "endPos": 90,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 2,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                }
+            ],
+            "startPos": 0,
+            "units": "deg",
+            "velMax": 720
+        }
+    ],
+    "format": "ECamUI",
+    "master": {
+        "countsPerRev": 4000,
+        "crankConnector": 0,
+        "crankGearDen": 1,
+        "crankGearNum": 1,
+        "crankMaxRpm": 600,
+        "crankPpr": 4000,
+        "crankRampRpmPerSec": 60,
+        "rpm": 50,
+        "source": "encoder",
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1,
+            "trigger": "digitalInput",
+            "triggerBit": 0,
+            "triggerInput": 10,
+            "triggerRising": true
+        }
+    },
+    "outputs": [
+        {
+            "master": "timeline",
+            "off": 1.4,
+            "on": 0.3,
+            "output": 0
+        },
+        {
+            "master": "timeline",
+            "off": 1.5,
+            "on": 1.4,
+            "output": 1
+        }
+    ],
+    "version": 1
+}

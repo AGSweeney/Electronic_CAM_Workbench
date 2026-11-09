@@ -1,0 +1,108 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "encoder",
+        "countsPerRev": 4000,
+        "rpm": 60,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "digitalInput",
+            "triggerInput": 10,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Pusher",
+            "master": "crank",
+            "units": "mm",
+            "connector": 0,
+            "countsPerUnit": 800,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 40,
+            "rollerRadius": 8,
+            "segments": [
+                {
+                    "endDeg": 120,
+                    "endPos": 20,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 180,
+                    "endPos": 20,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 300,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        },
+        {
+            "name": "Slide",
+            "master": "timeline",
+            "duration": 2.5,
+            "units": "mm",
+            "connector": 1,
+            "countsPerUnit": 800,
+            "velMax": 250,
+            "accMax": 2000,
+            "startPos": 0,
+            "closed": true,
+            "segments": [
+                {
+                    "endDeg": 0.8,
+                    "endPos": 150,
+                    "law": "modtrap"
+                },
+                {
+                    "endDeg": 1.4,
+                    "endPos": 150,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 2.5,
+                    "endPos": 0,
+                    "law": "poly345"
+                }
+            ]
+        },
+        {
+            "name": "Index table",
+            "master": "timeline",
+            "duration": 1.6,
+            "units": "deg",
+            "connector": 2,
+            "countsPerUnit": 35.5556,
+            "startPos": 0,
+            "closed": false,
+            "segments": [
+                {
+                    "endDeg": 0.3,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 1.2,
+                    "endPos": 90,
+                    "law": "modsine"
+                },
+                {
+                    "endDeg": 1.6,
+                    "endPos": 90,
+                    "law": "dwell"
+                }
+            ]
+        }
+    ]
+}

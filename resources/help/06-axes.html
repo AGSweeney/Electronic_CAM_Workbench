@@ -1,0 +1,123 @@
+<h1>Axes and mechanics</h1>
+<p>The <b>Axis</b> page holds the selected axis's name, master, motor connector, units, mechanics,
+limits and cam drawing.</p>
+<p align="center"><img src="images/axis_panel.png" width="760"></p>
+<p class="caption">The Axis page: name, master, motor connector, mechanics and limits.</p>
+
+<h2><a name="gear"></a>Electronic gear</h2>
+<p>Set <b>Type</b> to <b>Electronic gear</b> for an axis that simply follows the crank at a fixed ratio: a feed roll,
+a conveyor, a spindle. It has no diagram. <b>Gear ratio</b> is the travel, in this axis's units, for a number of crank
+revolutions:</p>
+<ul>
+<li><b>3 : 2</b> with units <i>rev</i>: three motor revolutions for every two of the crank.</li>
+<li><b>5 : 1</b> on a ballscrew in <i>mm</i>: 5 mm of travel per crank revolution.</li>
+<li><b>-1 : 1</b>: the same speed as the crank, the other way.</li>
+</ul>
+<p>A negative ratio makes the axis travel the other way. If the axis travels the right way on paper but its motor is
+mounted or set up the other way round, use <a href="#direction">Reverse motor direction</a> instead.</p>
+<p align="center"><img src="images/axis_gear.png" width="760"></p>
+<p class="caption">An axis set up as an electronic gear: 3 motor revolutions for every 2 crank revolutions.</p>
+<p>Both numbers are whole, and the board keeps the ratio exact: after any number of revolutions, in either direction,
+the axis is right to the count, however awkward the ratio (3 : 7 does not drift). It starts, ramps, stops and jogs with the crank,
+from an encoder or a driven crank, and the Analysis page shows its speed and limits as for any axis. The diagram shows one
+revolution of the crank as a straight line, and neither it nor the Segments table can be edited.</p>
+<p>A gear always follows the crank, so <b>Master</b> is fixed. In <a href="08-cutlength.html">cut-length mode</a> the
+crank is the line and the ratio is per cycle <i>as drawn</i>: changing the cut length leaves the gear's speed against the
+line as it was, so 100 : 1 on a 100 mm design length is 1 mm per mm of line whatever the cut.</p>
+
+<h2><a name="drive"></a>The drive</h2>
+<p>The drive turns positions in your units into motor steps (<b>counts per unit</b>):</p>
+<table>
+<tr><th>Drive</th><th>Counts per unit</th><th>Example</th></tr>
+<tr><td><b>Direct</b></td><td>typed in</td><td>a rotary table in degrees: 800 steps ÷ 360° = 2.222</td></tr>
+<tr><td><b>Ballscrew</b></td><td>motor steps per rev ÷ screw lead</td><td>800 ÷ 5 mm = 160 counts/mm</td></tr>
+<tr><td><b>Belt</b></td><td>motor steps per rev ÷ (π × pulley pitch diameter)</td><td>800 ÷ (π × 25 mm) = 10.19 counts/mm</td></tr>
+</table>
+<p>Units are free text (<code>mm</code>, <code>in</code>, <code>deg</code>, …); lead and pitch diameter are in the
+axis's units. Match <b>motor steps per rev</b> to the ClearPath's input resolution (MSP).</p>
+
+<h2><a name="limits"></a>Limits</h2>
+<p>Optional <b>velocity</b> and <b>acceleration</b> limits (per second). With them set:</p>
+<ul>
+<li>the Crank page gives the highest safe crank speed, and the Timeline page the highest safe override;</li>
+<li>Analysis warns when the profile exceeds them at the set speed (including the extra acceleration while a
+driven crank ramps).</li>
+</ul>
+
+<h2><a name="motor"></a>Motor speed</h2>
+<p>Analysis shows each axis's peak <b>motor rpm</b> and <b>step rate</b>, and a driven crank's motor rpm. Keep
+them inside the motor's rating; for a first run on the bench, well below it.</p>
+
+<h2><a name="camdrawing"></a>Cam drawing</h2>
+<p>For a crank axis, <b>base radius</b> and <b>roller radius</b> shape the plate cam in the cam view and the DXF
+export only. A larger base circle lowers the pressure angle; a roller larger than the cam's smallest
+curvature radius undercuts (Analysis warns).</p>
+
+<h2><a name="direction"></a>Motor direction</h2>
+<p>Tick <b>Reverse motor</b> on the Axis page if a motor turns the wrong way, and Upload. For a driven crank
+the same box is on the Crank page. Set it with the motor free of the machine, or at low speed, the first time.</p>
+<p>Only the motor changes: the diagram, the positions and the Analysis stay as drawn, so positive still means positive
+travel of the axis. Two motors can also differ because a drive is set up the other way round in its own software;
+this box covers that too.</p>
+
+<h2><a name="homing"></a>Homing</h2>
+<p>When the board starts, it doesn't know where an axis is: it takes every axis to be at the profile's start. Homing
+finds out. The board drives the axis to its <b>home switch</b>, catches the exact point where the switch trips, and sets
+the axis's position there. From then on the axis's positions are real, every time.</p>
+<p>It needs a home switch: an input with the <b>Home</b> job for the axis, on the <a href="09-board.html#inputs">Inputs</a>
+or <a href="09-board.html#ccio">CCIO-8</a> page. The <a href="09-board.html#switchwizard">switch wizard</a> sets one up
+and proves it, and can set up homing too. The <b>Homing</b> row on the Axis page shows the switch; <b>Homing…</b> opens
+the settings:</p>
+<p align="center"><img src="images/homing_window.png" width="620"></p>
+<p class="caption">The Homing window of an axis: the switch, the speeds, and what to do after homing.</p>
+
+<h3>The sequence</h3>
+<p align="center"><img src="images/homing_sequence.png" width="900"></p>
+<p class="caption">Homing toward −: the axis's position over time.</p>
+<ol>
+<li><b>Search.</b> The axis moves toward the switch at the <b>Search speed</b>. (If it starts on the switch, it first
+moves off it, and the back-off distance more.)</li>
+<li><b>Run-on.</b> The switch trips and the axis stops, at the <b>Decel</b>: it runs a little past the switch while it
+slows (speed² ÷ 2 × decel).</li>
+<li><b>Back off.</b> It moves away until the switch releases, then the <b>Back-off</b> distance more.</li>
+<li><b>Latch.</b> It comes back slowly, at the <b>Latch speed</b>. The sample the switch trips is the latch: the axis's
+position there becomes the <b>Home position</b>. Coming in slowly, from the same side every time, is what makes the
+position repeat to a count.</li>
+<li><b>Then</b> it moves to the cam's start, so Start can go, or stays at the switch.</li>
+</ol>
+<p>Limits stay active all the way. Homing fails, with the fault <i>home failed on X: …</i> and the motors still
+enabled, if a limit trips first, the search runs past its <b>Search length</b>, or the switch doesn't release.</p>
+
+<h3>The settings</h3>
+<table>
+<tr><td><b>Toward</b></td><td>Which way the switch is: <i>−</i> or <i>+</i>.</td></tr>
+<tr><td><b>Search speed</b></td><td>The search and the back-off. 10 % of the axis's jog speed to begin with: set it to
+suit the machine before homing it.</td></tr>
+<tr><td><b>Latch speed</b></td><td>The last, slow move onto the switch: slower repeats better.</td></tr>
+<tr><td><b>Back-off</b></td><td>How far past the switch's release it backs off before the slow move.</td></tr>
+<tr><td><b>Decel</b></td><td>How hard it stops on reaching the switch, after the search and after the latch. The axis runs
+on past the switch by speed² ÷ (2 × decel): at 100 mm/s and 2000 mm/s², 2.5 mm. <i>As axis jog</i> uses the axis's Acc
+max, or the search speed in a quarter second (100 mm/s: 12.5 mm). Leave that much room between the switch and the hard
+end.</td></tr>
+<tr><td><b>Home position</b></td><td>The axis's position at the switch's edge, measured like the diagram (the profile's
+start is 0).</td></tr>
+<tr><td><b>Search length</b></td><td>The longest search: past it, homing fails. Set it a little over the axis's travel.
+<i>Until the switch</i> searches until the switch or a limit; Analysis warns when there is no limit that way.</td></tr>
+<tr><td><b>Then</b></td><td><i>Move to the cam's start</i>, so Start can go, or <i>Stay at the switch</i>.</td></tr>
+<tr><td><b>Order</b></td><td>For <b>Home all</b>: lower numbers home first, the same number together (a Z axis up before
+X moves, say).</td></tr>
+<tr><td><b>Required before Start</b></td><td>The board refuses Start until the axis has homed since its motor was
+enabled.</td></tr>
+</table>
+
+<h3>Running it</h3>
+<p>Home from <a href="09-board.html#axisjog">Axis jog</a> (<b>Home</b> on an axis's card, <b>Home all</b> at its foot),
+from <b>Home</b> in the strip at the foot of the main window (every axis with a switch, in order), from a PLC (the HOME
+bit), or with <code>axhome</code> on the console. <b>Stop</b> stops it. An axis stays homed until its motor is disabled,
+a fault disables the motors, it is zeroed, a new profile is uploaded or the board restarts: a disabled ClearPath can be
+turned by hand, so the board can't vouch for its position after that. An axis left at the switch (<i>Stay</i>) is off
+its cam position, so Start waits until it is moved there (<b>To cam position</b>).</p>
+<p class="warn"><b>Before homing a real machine</b>, set the speeds, the decel and a search length. A project from
+before homing existed starts with defaults worked out from the axis's jog limit, which can be far too fast for a
+machine.</p>
+

@@ -1,0 +1,57 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "drivenCrank",
+        "countsPerRev": 800,
+        "rpm": 120,
+        "crankConnector": 0,
+        "crankRampRpmPerSec": 120,
+        "crankMaxRpm": 600,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Follower",
+            "master": "crank",
+            "units": "rev",
+            "connector": 1,
+            "countsPerUnit": 800,
+            "velMax": 15,
+            "accMax": 400,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 2,
+            "rollerRadius": 0.3,
+            "segments": [
+                {
+                    "endDeg": 120,
+                    "endPos": 1,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 180,
+                    "endPos": 1,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 300,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        }
+    ]
+}

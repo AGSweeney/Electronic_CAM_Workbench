@@ -1,0 +1,62 @@
+<h1>Files and exports</h1>
+
+<h2><a name="project"></a>The project</h2>
+<p>A project is one <code>.ecam</code> file (JSON): the master, every axis, the outputs, the mechanics and the
+drawing. <b>File › Save</b> / <b>Save as</b>; <b>Open recent</b> lists the last ten.</p>
+<p class="note"><b>The project travels with the upload.</b> Uploads carry a compressed copy of the whole project,
+so <b>Download</b> gives back exactly what was uploaded, mechanics and limits included.</p>
+
+<h2><a name="exports"></a>Exports</h2>
+<table>
+<tr><th>File menu</th><th>Writes</th></tr>
+<tr><td><b>Export table (CSV)…</b></td><td>The selected axis sampled over one cycle: master position, master counts, position, motor counts, velocity, acceleration.</td></tr>
+<tr><td><b>Export table (C header)…</b></td><td>The same as an <code>int32_t</code> table of motor counts, for a first firmware experiment.</td></tr>
+<tr><td><b>Export cam DXF…</b></td><td>A crank axis's plate cam (DXF R2000, in mm or inches): outline, pitch curve, base circle, optional bore, marks and notes, each on its own layer.</td></tr>
+<tr><td><b>Export path DXF…</b></td><td>The current axis's path (DXF R2000, in mm or inches): its position over one cycle as a polyline, with axes, ticks and notes. Across: on a timeline axis, so much per second (40 mm/s, or 10 in/s, to begin with); on a crank axis, a scale picked so the drawing is about twice as wide as it is tall, at an easy value such as 1 deg = 0.1 mm. Either is written in the notes. Also in the Axis menu and an axis's right-click menu in the project tree.</td></tr>
+<tr><td><b>Export workbook (Excel)…</b></td><td>The whole project as one <code>.xlsx</code> with tables and charts (below).</td></tr>
+<tr><td><b>Generate report…</b> (<kbd>Ctrl</kbd>+<kbd>R</kbd>)</td><td>A PDF for reviewing the project (below); it opens when written.</td></tr>
+</table>
+<p class="note"><b>DXF units:</b> both DXF exports draw lengths in mm or inches, converted from the axis's units, and set
+the drawing's units to match. An axis in degrees, revolutions or counts is drawn as it is, unitless. A path DXF's notes
+also carry a line beginning <code>ECW-PATH</code> with its scales, for reading the path back.</p>
+
+<h2><a name="excel"></a>The Excel workbook</h2>
+<p>One workbook, ready to share or archive:</p>
+<ul>
+<li><b>Summary</b>: every check, the axes at a glance (stroke, peaks, motor rpm, step rate), the master, links to
+each sheet.</li>
+<li><b>Master</b>: the master settings, the speed the project allows and why, the output pulses.</li>
+<li><b>Timing</b>: crank and timeline axes overlaid, and the output lanes, as charts.</li>
+<li>Per axis: <b>Profile</b> (settings, segments with their peaks, analysis), <b>Motion</b> (sampled position,
+velocity, acceleration, jerk, with a chart of each) and, for crank axes, <b>Cam</b> (outline to scale and
+pressure angle).</li>
+</ul>
+
+<h2><a name="report"></a>The project report</h2>
+<p>A PDF for the engineer who reviews the project before it runs, laid out for print (Letter or A4 by your
+region) and drawn as vector graphics, so it stays sharp at any zoom:</p>
+<ul>
+<li><b>Cover</b>: the review status (errors and warnings), key figures (crank speed and headroom, cycle time,
+axes, outputs, peak motor speed) and the contents.</li>
+<li><b>System overview</b>: a block diagram of the master, the ClearCore, each axis and the outputs, and which
+motor connector and pin does what.</li>
+<li><b>Timing diagram</b>: every axis on its master, the output pulses below.</li>
+<li><b>Machine cycle</b>: a flow chart of the cycle, one step for each stretch where nothing changes: which axes
+move (from, to, law), which hold, which outputs are on, and how long it takes.</li>
+<li><b>Master</b>, then <b>per axis</b>: settings beside results, its checks, the segment table, the
+displacement diagram with velocity, acceleration and jerk (limits and peaks marked), and for a crank axis the
+plate cam and its pressure angle.</li>
+<li><b>Outputs</b>, every <b>check</b>, and a <b>review and sign-off</b> page with a checklist, notes and
+signature lines.</li>
+</ul>
+<p>The figures and checks are the same as in the app and the workbook.</p>
+
+<h2><a name="cli"></a>Command line</h2>
+<table>
+<tr><td><code>ECamWorkbench project.ecam</code></td><td>open a project (skips the start page)</td></tr>
+<tr><td><code>--profile-lines project.ecam out.txt</code></td><td>the board upload and its hash</td></tr>
+<tr><td><code>--cam-dxf project.ecam &lt;axis&gt; out.dxf</code></td><td>the plate cam of a crank axis</td></tr>
+<tr><td><code>--workbook project.ecam out.xlsx [samples]</code></td><td>the Excel workbook</td></tr>
+<tr><td><code>--report project.ecam out.pdf</code></td><td>the project report</td></tr>
+<tr><td><code>--no-start</code></td><td>skip the start page</td></tr>
+</table>

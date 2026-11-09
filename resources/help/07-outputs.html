@@ -1,0 +1,37 @@
+<h1>Outputs</h1>
+<p>The project switches the ClearCore's outputs <b>IO-0..IO-5</b> with <b>pulses</b>, like the cam switches of a
+mechanical machine: a saw motor, a clamp, a glue gun, a vacuum valve. Outputs belong to the whole project, and
+each pulse picks its master:</p>
+<ul>
+<li><b>Crank pulse</b>: on from <i>a</i> to <i>b</i> crank degrees, every revolution; on while the crank is engaged.</li>
+<li><b>Timeline pulse</b>: on from <i>t₁</i> to <i>t₂</i> seconds of timeline time; it follows the speed override,
+repeat and hand jog with the timeline axes.</li>
+</ul>
+<p>Up to 32 pulses (at least 0.1° or 1 ms each). <b>Every output is off</b> when its master is not running:
+idle, armed, done, after Stop, Abort, a fault or the estop.</p>
+
+<h2><a name="band"></a>The Outputs band</h2>
+<p>At the bottom of the Displacement Diagram, one lane for each output the project uses (an output with at least
+one pulse); with none, no band. Each lane shows the pulses on the selected axis's master (crank pulses on a crank
+axis, timeline pulses on a timeline axis; the other master's pulses are counted, greyed). A new output starts on the
+<a href="#panel">Outputs page</a>.</p>
+<ul>
+<li><b>Double-click</b> a lane to add a pulse to that output; <b>drag</b> it to move it (also onto another lane); drag an
+<b>end</b> to change on or off; <b>right-click</b> to delete. It snaps like the knots (<kbd>Alt</kbd>: none).</li>
+<li>The <b>lamp</b> by each label shows the output at the cursor; the square, the board's output while it runs
+this project.</li>
+</ul>
+<p align="center"><img src="images/diagram_timeline.png" width="820"></p>
+<p class="caption">A pick-and-place timeline: the X axis's move, with the gripper (IO-0) and vacuum (IO-1) pulses in the band.</p>
+
+<h2><a name="panel"></a>The Outputs page</h2>
+<p align="center"><img src="images/outputs_panel.png" width="760"></p>
+<p class="caption">The Outputs page: each pulse as a row of output, master, on and off.</p>
+<p>Every pulse as a table (output, master, on, off) to type exact values. <b>Add</b> puts a pulse at the cursor
+on the selected axis's master, on the first output not yet used; the <b>Output</b> column moves it to another.
+Changing a pulse's master converts it at the expected crank speed.</p>
+<p class="warn"><b>An IO pin is an output or the trigger, not both.</b> The timeline's trigger input (Timeline page)
+can't be an IO pin the outputs use: the trigger list greys those pins, the Output column greys the trigger's, and a
+project that has both on one pin gets an error in the review (the board refuses to load it).</p>
+<p class="warn"><b>Simulate does not switch the pins.</b> The board still runs and reports the outputs (the
+status line and the lamps), so a simulation never fires a real actuator.</p>

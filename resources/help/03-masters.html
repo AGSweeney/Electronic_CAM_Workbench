@@ -1,0 +1,129 @@
+<h1>Masters: crank and timeline</h1>
+<p>Every axis follows a <b>master</b>. One firmware runs up to four axes (one per motor connector, M-0 to M-3),
+and each axis picks its master: crank axes and timeline axes can run together.</p>
+<table>
+<tr><th>Master</th><th>x is</th><th>Repeats</th><th>Typical use</th></tr>
+<tr><td><b>Crank</b></td><td>the crank angle, 0 to 360°</td><td>every revolution</td><td>anything tied to a machine shaft or a line</td></tr>
+<tr><td><b>Timeline</b></td><td>seconds from a trigger</td><td>once per trigger, or repeating</td><td>moves started by an input: pick and place, gates</td></tr>
+</table>
+
+<h2><a name="crank"></a>The crank</h2>
+<p align="center"><img src="images/crank_panel.png" width="760"></p>
+<p class="caption">The Crank page, here in cut-length mode with an encoder on the line.</p>
+<p>The crank is either:</p>
+<ul>
+<li>an <b>external encoder</b> on the Encoder Adapter: the machine runs on its own and the followers track it.
+<b>Encoder counts / rev</b> is <b>4 × the encoder's line count</b> (every quadrature edge counts). <b>Expected
+speed</b> is only used for the analysis and the preview; or</li>
+<li>a <b>driven crank</b>: a motor the ClearCore runs itself at the <b>Run speed</b>, ramping at the
+<b>Ramp</b> (rpm/s) up to the motor's <b>max</b>.</li>
+</ul>
+<p>The <b>gear ratio</b> is motor (or encoder) turns : crank turns as a fraction, so a gearbox that is not a
+whole ratio stays exact (50 : 7). With axis velocity / acceleration limits set, the page gives the <b>highest
+safe crank speed</b>, including the extra acceleration followers feel while a driven crank ramps.</p>
+
+<h3>Bringing an encoder up</h3>
+<ol>
+<li>Connect and watch the <b>Encoder</b> row on the Board page: it should count <b>up</b> as the machine moves
+forward. If it counts down, tick <b>Reverse encoder direction</b> (Crank page) and Upload again; do not swap
+wires.</li>
+<li>Press <b>Zero</b> and turn the encoder one revolution: the row reads 1.000 rev.</li>
+<li>Upload, tick <b>Simulate</b>, <b>Start</b>, and move the machine: the cam view and the diagram follow.</li>
+</ol>
+<p class="note">No encoder yet? Tick <b>Simulate</b>, <b>Start</b>, then <b>Run</b> in the <b>Sim encoder</b> row of the Board page
+row: the board moves a simulated count and everything follows it as it would a real one.</p>
+
+<h2><a name="timeline"></a>The timeline</h2>
+<p align="center"><img src="images/timeline_panel.png" width="560"></p>
+<p class="caption">The Timeline page: repeat, speed override and the trigger.</p>
+<p>On the timeline x is time in seconds from a <i>t</i> = 0 shared by every timeline axis. Each timeline axis
+has its own <b>duration</b> (drag its last knot sideways, or set Duration in the Axis page) and rests at its
+end position after it.</p>
+<ul>
+<li><b>Trigger</b>: a digital input and edge, or a command (the <b>Trigger</b> button in the board strip). The input
+list greys out inputs that cannot be used (the Encoder Adapter's DI-6..DI-8 while an encoder is the master, an
+IO pin used as an output, the board's estop input).</li>
+<li><b>One-shot</b> or <b>repeat</b>: one-shot stops at the end (<i>done</i>; Trigger runs it again), repeat wraps
+to 0.</li>
+<li><b>Speed override</b>: the timeline's speed, 100 % = as drawn. With limits set, the page gives the highest
+safe override.</li>
+</ul>
+<p>The timeline's length is the longest timeline axis or the last timeline output pulse, whichever ends later.</p>
+
+<h2><a name="waits"></a>Waits</h2>
+<p>A <b>wait</b> holds the timeline at a point until an input says go. It is how a timeline machine checks that
+something happened before it carries on: the part is gripped before the lift rises, the clamp is closed before the
+saw comes down, the PLC has cleared the place position before the arm swings over it.</p>
+<p>At a wait, every timeline axis and every timeline output stays exactly where it is. When the input arrives the
+timeline runs on from there, as drawn, as if it had never stopped: each wait only adds the time it held to the cycle.
+Crank axes, in a project that has both, carry on: a wait holds only the timeline.</p>
+
+<h3>An example: pick and place</h3>
+<p align="center"><img src="images/timing_waits.png" width="700"></p>
+<p class="caption">The pick and place with two waits, drawn as dashed lines across the Timing view.</p>
+<p>In the <i>Pick and place</i> example the Z lift goes down, the vacuum comes on (IO-0, from 0.3 s), and the lift
+rises with the part. Nothing on the timeline knows whether the part was really picked. Two waits fix that:</p>
+<ol>
+<li><b>Gripper closed</b> at 0.25 s, on IO-2 (the vacuum switch), <i>On</i>, with a 2 s timeout. The lift is down and
+still; the timeline holds there until the vacuum switch says the part is held. If it never does, after 2 s the machine
+stops with a fault instead of swinging an empty gripper across.</li>
+<li><b>PLC: place clear</b> at 1.6 s, on PLC bit 0, no timeout. Before the arm comes back, the PLC confirms the place
+position is clear; the machine waits as long as it takes.</li>
+</ol>
+<p>To build it: open <b>Timeline › Waits</b> in the project tree, move the cursor near where the wait should be, and
+press <b>Add</b>. Or right-click the Timing view there: <i>Wait for an input here…</i>. Then fill in the row.</p>
+<p align="center"><img src="images/waits_page.png" width="760"></p>
+<p class="caption">The Waits page of the pick and place: one wait on a board input, one on a PLC bit.</p>
+
+<h3>The settings</h3>
+<table>
+<tr><td><b>Time</b></td><td>Seconds into the cycle, as drawn. A wait goes only where every timeline axis is at rest
+(the board stops the clock at once, which is gentle only there): <b>Add</b> and the right-click put it at the nearest
+such time, and Analysis marks one where an axis moves as an error. To move a wait, drag its line in the Timing view: it
+turns red where an axis is moving and, dropped there, snaps to the nearest time they all rest.</td></tr>
+<tr><td><b>Name</b></td><td>What the operator sees while it waits: <i>Waiting for Gripper closed</i>.</td></tr>
+<tr><td><b>Input</b></td><td>A board input (IO-0 … A-12), a CCIO-8 input, or a <b>PLC bit</b> (0 … 31) that the PLC
+sends in its output assembly (<a href="15-plc.html">the PLC chapter</a>). An input that already does something else
+(an output, the trigger, the estop, a home or limit, an operator input) can't be one. A wait's input shows <i>Timeline
+wait</i> on the Inputs page.</td></tr>
+<tr><td><b>Wait for</b></td><td><i>On</i> (the input closed / the bit set) or <i>Off</i>.</td></tr>
+<tr><td><b>Change</b></td><td>Ticked (the default): the wait passes only if the input has been at the <i>other</i>
+level since this wait last passed (since Start, the first time), and is at the wanted level now. So a sensor stuck
+<i>On</i> can't let the next cycle through: the wait holds, and times out if it has a timeout. The change can come any
+time before the timeline gets there: a gripper that closes early isn't missed. Unticked: the level alone, for a steady
+condition that is simply true or not, such as a guard door closed or the PLC's go.</td></tr>
+<tr><td><b>Timeout</b></td><td>How long it may hold, or <i>forever</i>. Past it, the machine stops at the wait with the
+fault <i>wait 1 (IO-2 on) timed out at 0.250 s</i>, the motors still enabled and holding.</td></tr>
+</table>
+
+<h3>How it runs</h3>
+<ul>
+<li><b>Exactly at its time.</b> The timeline's clock stops on the wait's time, not near it. Everything drawn before
+that time has happened; nothing at it has, so an output pulse that starts at the wait's time starts when the wait
+passes ("wait, then do").</li>
+<li><b>Every cycle.</b> Each wait holds once a cycle, one-shot or repeating.</li>
+<li><b>Fast.</b> A wired input is seen within a millisecond (it is filtered over 0.6 ms against bounce). A PLC bit
+arrives with the PLC's next packet and scan: 20 ms or more. A PLC-bit wait never passes while the PLC isn't connected and
+in Run, whichever level it wants.</li>
+<li><b>Stop</b> during a wait stops the machine there. It does not finish the cycle: that would make the very moves
+the wait was holding back. Start then waits until the timeline axes are back at their start (<b>To cam position</b> in
+Axis jog), as after any cut-short cycle. <b>Abort</b>, <b>Disable</b>, the estop and a lost PLC connection work as
+always.</li>
+<li><b>Hand jog</b> ignores waits. <b>Simulate</b> holds on the real inputs, and <b>Skip wait</b> on the Board page
+(Timeline row) passes the one holding, so a timeline can be tried without its sensors.</li>
+</ul>
+
+<h3>What you see</h3>
+<p>While a wait holds, the board strip's timeline line says <i>Waiting for Gripper closed (IO-2 on), 3.2 s</i>, and the
+Timing view lights that wait's line. The PLC sees TimelineState 6 (waiting), StatusFlags bit 14, which wait
+(WaitIndex) and for how long (WaitedMs): with no timeout, the PLC can raise its own alarm after however long suits the
+machine.</p>
+<p class="note"><b>A wait that never passes:</b> look at its input on the Inputs page (State) while it waits. With
+<b>Change</b> ticked, the input must also go to the other level once: a sensor stuck on holds it, which is what the
+setting is for. A PLC-bit wait needs the PLC connected and in Run.</p>
+
+<h2><a name="switch"></a>Changing an axis's master</h2>
+<p>Changing an axis's master keeps its motion: crank → timeline maps one revolution at the current crank speed
+onto seconds; timeline → crank stretches the duration to 360°.</p>
+<p>For a flying saw, laser or shear whose cut length changes on the fly, see
+<a href="08-cutlength.html">cut-length mode</a>.</p>

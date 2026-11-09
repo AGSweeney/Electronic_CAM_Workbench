@@ -1,0 +1,93 @@
+<h1>The window</h1>
+<p>Everything about one project is on one screen, and the layout is remembered. It fits a 1920 × 1080 screen with
+nothing to scroll.</p>
+<p align="center"><img src="images/overview.png" width="820"></p>
+<p class="caption">A flying saw (cut-length mode) open in the editor, the carriage axis selected.</p>
+<table>
+<tr><th>#</th><th>Part</th><th>What it is for</th></tr>
+<tr><td>1</td><td><b>Project tree</b></td><td>The project's master, axes and their segments, outputs, inputs, CCIO-8, analysis and board.
+Click a node to open it in the detail pane. Under it, the <a href="#status">Status</a> panel. <kbd>F9</kbd> or « hides
+both.</td></tr>
+<tr><td>2</td><td><b>Detail pane</b></td><td>Whatever the tree has selected: <i>Crank</i>, <i>Timeline</i>, an axis, its
+<i>Segments</i>, <i>Outputs</i>, <i>Analysis</i> or <i>Board</i>. The diagram stays in view while you edit.</td></tr>
+<tr><td>3</td><td><b>Cam</b> / <b>Timing</b></td><td>The selected crank axis drawn as a plate cam, or the Timing view of every
+timeline axis, whichever the selected axis is on (<kbd>Ctrl</kbd>+<kbd>T</kbd>: the Timing view for a crank axis too, in a
+project with both). <kbd>Shift</kbd>+<kbd>F9</kbd> (<b>View › Cam / Timing view</b>) or » folds it away and
+gives the detail pane its width.</td></tr>
+<tr><td>4</td><td><b>Displacement Diagram</b></td><td>The selected axis over its master, the full width of the window: position,
+then velocity, acceleration and jerk, then the Outputs band. Drag knots here.</td></tr>
+<tr><td>5</td><td><b>Board strip</b></td><td>Whether the board is there, what it is doing, and the buttons that run it, always
+in view (see <a href="09-board.html#strip">The board strip</a>).</td></tr>
+</table>
+<p>Drag the line between the top row and the diagram to share the height differently. On a short window the top row
+gives way and its pages scroll, and it comes back when there is room.</p>
+
+<h2><a name="tree"></a>The project tree</h2>
+<p align="center"><img src="images/project_tree.png" width="240"></p>
+<p class="caption">The project tree. A triangle marks a node with a problem.</p>
+<p>The tree is the project at a glance, with <a href="09-board.html#ccio">CCIO-8</a> inputs under their own node. Clicking an axis selects it everywhere, and the tree follows the diagram's
+<b>Axis</b> list; clicking a segment in the diagram opens <i>Segments</i>. Right-click an axis for the Axis menu.</p>
+<p>A <b>triangle</b> marks what the project review found: red for an error, amber for a warning. Hover over the node to
+read it. A problem with an axis is on that axis, a problem with the master on Crank or Timeline, and one that belongs to
+the whole project, such as two axes on one motor, on the project. Headings and the project show the worst thing under
+them, so folding a branch can't hide a red one. <i>Analysis</i> has the details for the selected axis.</p>
+
+<h2><a name="status"></a>The Status panel</h2>
+<p>Under the project tree, the board as it is now: what it is doing, the estop (<b>OK</b>, <b>Open</b>, or
+<b>Off</b> when the board ignores it, see <a href="09-board.html#estop">Estop</a>), and each motor connector, M-0 to M-3.
+A motor reads <b>Disabled</b>, <b>Enabled</b> (with its HLFB up), <b>Enabled, no HLFB</b> (enabled but the motor isn't
+saying it is ready: still enabling, or not connected), or <b>Fault</b>. When the open project is the one on the board,
+each motor shows its axis's name, or <i>Crank</i>. A latched fault shows under the motors. Drag the line above it to
+give the tree more or less room. With no board connected it shows dashes.</p>
+
+<h2><a name="diagram"></a>The Displacement Diagram</h2>
+<p align="center"><img src="images/diagram.png" width="820"></p>
+<p class="caption">Position (top), velocity and acceleration (middle, normalized) and the Outputs band (bottom). The green band is the saw's sync window.</p>
+<p>The bar above the diagram holds, from the left:</p>
+<ul>
+<li><b>Axis</b>: which axis the diagram (and the Segments table) shows. <kbd>Ctrl</kbd>+<kbd>PgUp</kbd> /
+<kbd>Ctrl</kbd>+<kbd>PgDn</kbd> step through them.</li>
+<li><b>Lock</b> (<kbd>Ctrl</kbd>+<kbd>L</kbd>): locks the profile against accidental edits (see <a href="04-profile.html#lock">Locking</a>).</li>
+<li><b>Run</b> (<kbd>Space</kbd>): turns the crank at the master speed, or plays the timeline, in the app only.</li>
+<li><b>Velocity</b>, <b>Acceleration</b>, <b>Jerk</b>, <b>Outputs</b>: what the diagram shows.</li>
+<li>The <b>readout</b>: at the cursor, the master position (θ in degrees, <i>t</i> in seconds, or <i>x</i> in mm of
+line in cut-length mode), then position <i>s</i>, velocity <i>v</i> and acceleration <i>a</i> per second. While you
+drag a knot it shows the knot.</li>
+<li><b>Fit</b>: back to the whole cycle after zooming (it shows the zoom).</li>
+<li><b>Snap</b>: the grid knots snap to while dragging, in the master's units and in position.</li>
+</ul>
+<p>On a narrow window the readout, Fit and Snap wrap to a second row.</p>
+<h3>Zoom and pan</h3>
+<p><kbd>Ctrl</kbd>+wheel zooms the master axis about the mouse (all bands together),
+<kbd>Ctrl</kbd> <kbd>+</kbd> / <kbd>&minus;</kbd> about the cursor, <kbd>Ctrl</kbd>+<kbd>0</kbd> or <b>Fit</b> shows the
+whole cycle. Middle-drag or <kbd>Shift</kbd>+wheel pans while zoomed.</p>
+<p align="center"><img src="images/diagram_zoom.png" width="820"></p>
+<p class="caption">Zoomed ×3 on the saw's sync: the grid gets finer, the knots and pulses stay editable.</p>
+
+<h2><a name="cam"></a>The cam view</h2>
+<p align="center"><img src="images/cam_view.png" width="520"></p>
+<p class="caption">The cam view: the crank axis drawn as the plate cam it replaces, with the follower at 12 o'clock.</p>
+<p>A crank axis drawn as the mechanical plate cam it replaces: the cam turns clockwise, the follower is a
+translating roller at 12 o'clock, coloured by segment. The dashed orange line is the contact normal (the
+pressure angle). Drag the cam to turn it, the wheel steps 1° (<kbd>Shift</kbd>: 10°). The box in the corner
+reads the crank angle θ, position <i>s</i> and pressure angle φ. Base and roller radius (Axis page) only change
+this drawing and the DXF export.</p>
+
+<h2><a name="timing"></a>The Timing view</h2>
+<p align="center"><img src="images/timing_view.png" width="700"></p>
+<p class="caption">The Timing view: every timeline axis on one time axis, with the output pulses.</p>
+<p>Every timeline axis on the shared timeline, with the timeline's output pulses. It shows when a timeline
+axis is selected. In a project with crank and timeline axes, <b>View › Timing view for crank axes</b>
+(<kbd>Ctrl</kbd>+<kbd>T</kbd>) keeps it up while a crank axis is selected too. Click an axis's row to select
+it; scrub to move the cursor.</p>
+
+<h2><a name="menus"></a>Menus</h2>
+<table>
+<tr><th>Menu</th><th>Holds</th></tr>
+<tr><td><b>File</b></td><td>New, guided setup, open, recent, examples, start page, save, exports (CSV, C header, cam DXF, Excel workbook).</td></tr>
+<tr><td><b>Edit</b></td><td>Undo / redo (every edit; a drag is one step), split and delete segment.</td></tr>
+<tr><td><b>Axis</b></td><td>Add, duplicate and remove axes (up to four, one per motor connector).</td></tr>
+<tr><td><b>View</b></td><td>Project tree (<kbd>F9</kbd>), Cam / Timing view (<kbd>Shift</kbd>+<kbd>F9</kbd>: shows or hides the pane), Timing view for crank axes (<kbd>Ctrl</kbd>+<kbd>T</kbd>, projects with both kinds of axis).</td></tr>
+<tr><td><b>Tools</b></td><td>ClearPath scope (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>).</td></tr>
+<tr><td><b>Help</b></td><td>This guide (<kbd>F1</kbd>), worked examples, keys, the scope, About.</td></tr>
+</table>

@@ -1,0 +1,127 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "encoder",
+        "countsPerRev": 7200,
+        "crankPpr": 4000,
+        "crankGearNum": 9,
+        "crankGearDen": 5,
+        "rpm": 8,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Carriage",
+            "master": "crank",
+            "units": "mm",
+            "connector": 0,
+            "drive": "ballscrew",
+            "motorPpr": 800,
+            "screwPitch": 5,
+            "countsPerUnit": 160,
+            "velMax": 90,
+            "accMax": 400,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 170,
+            "rollerRadius": 14,
+            "segments": [
+                {
+                    "endDeg": 40,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 100,
+                    "endPos": 30,
+                    "law": "blend"
+                },
+                {
+                    "endDeg": 160,
+                    "endPos": 90,
+                    "law": "linear"
+                },
+                {
+                    "endDeg": 220,
+                    "endPos": 120,
+                    "law": "blend"
+                },
+                {
+                    "endDeg": 350,
+                    "endPos": 0,
+                    "law": "poly345"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        },
+        {
+            "name": "Saw plunge",
+            "master": "crank",
+            "units": "mm",
+            "connector": 1,
+            "drive": "ballscrew",
+            "motorPpr": 800,
+            "screwPitch": 5,
+            "countsPerUnit": 160,
+            "velMax": 120,
+            "accMax": 3000,
+            "startPos": 0,
+            "closed": true,
+            "baseRadius": 60,
+            "rollerRadius": 10,
+            "segments": [
+                {
+                    "endDeg": 105,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 125,
+                    "endPos": 6,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 135,
+                    "endPos": 6,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 155,
+                    "endPos": 0,
+                    "law": "cycloidal"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0,
+                    "law": "dwell"
+                }
+            ]
+        }
+    ],
+    "outputs": [
+        {
+            "output": 0,
+            "master": "crank",
+            "on": 95,
+            "off": 165
+        },
+        {
+            "output": 1,
+            "master": "crank",
+            "on": 100,
+            "off": 160
+        }
+    ]
+}

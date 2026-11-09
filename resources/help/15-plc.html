@@ -1,0 +1,163 @@
+<h1>PLC (EtherNet/IP)</h1>
+<p>The ClearCore is also an <b>EtherNet/IP adapter</b>: a PLC reads the machine's state every few milliseconds and,
+when it takes control, enables, starts, stops, triggers and jogs it, and sets its speed, timeline override and cut
+length. The profile itself still comes from this app (<b>Upload</b>); the PLC runs it.</p>
+
+<h2><a name="setup"></a>Adding the board to a PLC project</h2>
+<p>Add the board as a generic EtherNet/IP module with these values:</p>
+<table>
+<tr><th>Setting</th><th>Value</th></tr>
+<tr><td>Identity</td><td>Vendor 65000, device type 43 (generic device), product code 3, "ECam ClearCore"</td></tr>
+<tr><td>Output (PLC → board)</td><td>assembly <b>150</b>, <b>64 bytes</b> (16 DINT), with a run/idle header</td></tr>
+<tr><td>Input (board → PLC)</td><td>assembly <b>100</b>, <b>160 bytes</b> (40 DINT)</td></tr>
+<tr><td>Configuration</td><td>assembly <b>151</b>, 0 bytes</td></tr>
+<tr><td>RPI</td><td>10–100 ms; <b>20 ms</b> is a good start</td></tr>
+<tr><td>Connection</td><td>Exclusive owner; input point-to-point or multicast. One owner at a time.</td></tr>
+</table>
+<ul>
+<li><b>Logix</b> (Studio 5000): a <i>Generic Ethernet Module</i>, Comm Format <i>Data – DINT</i>, Input instance 100
+size 40, Output 150 size 16, Configuration 151 size 0, the board's IP address.</li>
+<li><b>Micro800</b> (CCW): a <i>Generic EtherNet/IP device</i> under the controller's Ethernet settings, with the
+board's IP address, an Exclusive Owner connection, input instance 100, output 150 and configuration 151 (0 bytes).
+Pick <b>DINT</b> for the data and the sizes are 40 (input) and 16 (output): the variables then match the maps below
+as they are. With <b>SINT</b> they are 160 and 64 bytes; copy the input into a <code>DINT[40]</code> and a
+<code>DINT[16]</code> into the output each scan with COP. The configuration variable comes out larger than set: it
+carries nothing, leave it.</li>
+</ul>
+<p class="note"><b>Connection timeout:</b> uploading a profile pauses the board's EtherNet/IP traffic about
+<b>50 ms</b> (the flash is being written). Keep the timeout (RPI × multiplier) at <b>80 ms or more</b>: 20 ms × 4, or
+10 ms × 8. With 10 ms × 4 the PLC would see the connection drop during an upload.</p>
+<p class="note"><b>Wrong sizes</b> show as a module fault 16#0127 (output size) or 16#0128 (input size): check the
+sizes above. 16#0106: another PLC (or tool) already owns the connection.</p>
+
+<h2><a name="control"></a>Who is in control</h2>
+<p>The PLC is <b>in control</b> while its connection is open, it is in <b>Run</b> and it holds <b>PLC_CONTROL</b>
+(ControlFlags bit 1). The board strip then shows <i>PLC … in control</i> with an amber light and greys out Upload, Forget, Enable, Simulate,
+Start, Trigger, Hand jog and the cut length: the board refuses them. <b>Stop, Abort and Disable always work</b>, from
+the app or the PLC. Without PLC_CONTROL a PLC only reads, and can still stop, abort and drop ENABLE. Releasing
+PLC_CONTROL hands the running machine back to the app without stopping it.</p>
+<ul>
+<li><b>Edges</b> (START, STOP, ABORT, CLEAR_FAULT, TRIGGER) act when a bit turns on. Hold a bit for at least one
+RPI. A bit already on when the connection opens, or when the PLC goes to Run, is <i>not</i> an edge: nothing starts by
+itself after a reconnect. Turn it off and on again.</li>
+<li><b>Levels:</b> ENABLE on enables, off disables. SIMULATE on is <i>sim 1</i>, off <i>sim 0</i>. JOG on is hand mode
+(below).</li>
+<li><b>Nothing to acknowledge.</b> A refused edge or setpoint changes nothing and shows its reason in
+<b>RejectCode</b>; the next accepted action clears it.</li>
+</ul>
+
+<h2><a name="loss"></a>When the connection drops</h2>
+<p>If the connection closes, times out (a pulled cable) or the PLC goes to Program while the PLC is in control, the
+board makes a <b>controlled stop</b> (a driven crank and the timeline ramp down at once, as a second Stop), lets the motors settle (at most half a second), then disables
+them and latches <b>FaultCode 4</b> (COMM_LOSS). CLEAR_FAULT, then ENABLE and START, run it again.</p>
+<p class="warn"><b>Encoder master:</b> the board can't ramp a line or a shaft it doesn't drive, so its followers let
+go at once while the line may keep moving. The PLC's own connection-loss handling must stop the line (on a flying saw,
+the line and the saw).</p>
+
+<h2><a name="command"></a>Output: the command assembly (150)</h2>
+<table>
+<tr><th>DINT</th><th>Bytes</th><th>Field</th></tr>
+<tr><td>0</td><td>0–1</td><td><b>ControlFlags</b> (bits below; bytes 2–3 are 0)</td></tr>
+<tr><td>1</td><td>4</td><td><b>CrankRpm</b>, 0.01 rpm, driven crank. 0 = the profile's speed</td></tr>
+<tr><td>2</td><td>8</td><td><b>TimelineOverride</b>, 0.01 % (10000 = as drawn). 0 = the profile's</td></tr>
+<tr><td>3</td><td>12</td><td><b>CutLength</b>, µm of finished piece (cut-length mode). 0 = keep the current length</td></tr>
+<tr><td>4</td><td>16</td><td><b>JogCrankTarget</b>, millidegrees since the load: rev × 360000 + angle</td></tr>
+<tr><td>5</td><td>20</td><td><b>JogTimeTarget</b>, µs of timeline time</td></tr>
+<tr><td>6</td><td>24</td><td><b>WaitBits</b>: bit n = PLC wait bit n, for the timeline's <a href="03-masters.html#waits">waits</a> on a PLC bit. Levels; no PLC_CONTROL needed</td></tr>
+<tr><td>7–15</td><td>28–63</td><td>reserved, 0</td></tr>
+</table>
+<table>
+<tr><th>Bit</th><th>Name</th><th>Does</th></tr>
+<tr><td>0</td><td>ENABLE</td><td>on: enable the profile's motors; off: disable (always)</td></tr>
+<tr><td>1</td><td>PLC_CONTROL</td><td>the PLC takes control</td></tr>
+<tr><td>2</td><td>START</td><td>edge: crank axes engage (a driven crank ramps up), the timeline arms</td></tr>
+<tr><td>3</td><td>STOP</td><td>edge (always): a timeline finishes its cycle, then rests; a second edge ramps it to rest at once. A crank ramps to rest</td></tr>
+<tr><td>4</td><td>ABORT</td><td>edge: stop at once (always)</td></tr>
+<tr><td>5</td><td>CLEAR_FAULT</td><td>edge: clear a latched fault</td></tr>
+<tr><td>6</td><td>SIMULATE</td><td>on: run without stepping the motors or switching outputs</td></tr>
+<tr><td>7</td><td>JOG</td><td>on: hand mode, the master follows the jog targets; off: comes to rest and releases (always)</td></tr>
+<tr><td>8</td><td>TRIGGER</td><td>edge: starts the armed timeline, for a project whose trigger is <i>PLC (EtherNet/IP TRIGGER bit)</i></td></tr>
+<tr><td>9</td><td>HOME</td><td>edge: home every axis with a home switch, in order (<a href="06-axes.html#homing">Homing</a>); STOP stops it</td></tr>
+</table>
+<ul>
+<li><b>Setpoints</b> apply when they change, and the non-zero ones again when the PLC takes control. Setting CrankRpm or
+TimelineOverride back to 0 returns to the project's value. A cut length applies from the next cut (at once with the
+crank off).</li>
+<li><b>Jog:</b> first copy where the master is into the targets (CrankRev × 360000 + CrankAngle; TimelineTime), then
+turn JOG on, then move the targets. The master goes there at the project's speed and ramp, every axis following its
+profile.</li>
+<li><b>Trigger timing:</b> TRIGGER reaches the timeline about 1 ms after the packet arrives, plus the PLC's RPI and
+scan. Where the trigger timing matters, use a wired trigger input (200 µs).</li>
+<li><b>Waits:</b> a timeline wait on a PLC bit passes when WaitBits has that bit at the level it wants, seen in the next
+packet: the RPI plus the PLC's scan, 20 ms or more. Without a connection in Run it never passes. TimelineState 6,
+StatusFlags bit 14, WaitIndex and WaitedMs say which wait holds and for how long, so the PLC can raise its own alarm for
+a wait with no timeout.</li>
+</ul>
+
+<h2><a name="status"></a>Input: the status assembly (100)</h2>
+<table>
+<tr><th>DINT</th><th>Field (low word / high word)</th></tr>
+<tr><td>0</td><td>FirmwareRev (major × 256 + minor) / <b>StatusFlags</b></td></tr>
+<tr><td>1</td><td><b>FaultCode</b> / <b>RejectCode</b></td></tr>
+<tr><td>2</td><td>EngineState / CrankState</td></tr>
+<tr><td>3</td><td>TimelineState / Outputs (bit n = IO-n)</td></tr>
+<tr><td>4</td><td>ProfileHash: the loaded project (the app's status line shows the same number)</td></tr>
+<tr><td>5</td><td>Heartbeat, ms since boot: if it stops changing, the board has stalled</td></tr>
+<tr><td>6, 7, 8</td><td>CrankAngle (millidegrees in the cycle), CrankRev, CrankRpm (0.01 rpm)</td></tr>
+<tr><td>9, 10, 11</td><td>TimelineTime (µs), TimelineCycle, TimelineOverride (0.01 %)</td></tr>
+<tr><td>12</td><td>EncoderCount</td></tr>
+<tr><td>13</td><td>AxisCount / Inputs (bit 0 the trigger input, bit 1 estop OK)</td></tr>
+<tr><td>14–18</td><td>Cut-length mode, µm: CutLength, CutLengthNext, CutLengthMin, CutGap, SyncLeft (−1 outside the sync)</td></tr>
+<tr><td>19</td><td>CommLossCount</td></tr>
+<tr><td>20, 21</td><td>WaitIndex (the timeline wait holding, from 1; 0 none) / reserved, WaitedMs (how long it has held)</td></tr>
+<tr><td>24 + 4·i</td><td>Axis i: CommandedCounts, CommandedTravel (milli-units since the load), AxisFlags / Connector</td></tr>
+</table>
+<table>
+<tr><th>Value</th><th>StatusFlags bit</th><th>EngineState</th><th>CrankState</th><th>TimelineState</th></tr>
+<tr><td>0</td><td>profile loaded</td><td>empty</td><td>off</td><td>idle</td></tr>
+<tr><td>1</td><td>stored in flash</td><td>disabled</td><td>following</td><td>armed</td></tr>
+<tr><td>2</td><td>enabled</td><td>ready</td><td>running</td><td>running</td></tr>
+<tr><td>3</td><td>ready</td><td>armed</td><td>stopping</td><td>stopping</td></tr>
+<tr><td>4</td><td>running</td><td>running</td><td>jogging</td><td>done</td></tr>
+<tr><td>5</td><td>timeline armed</td><td>jogging</td><td></td><td>jogging</td></tr>
+<tr><td>6</td><td>timeline done</td><td>fault</td><td></td><td>waiting</td></tr>
+<tr><td>7–14</td><td>stopping, jogging, faulted, estop open, simulate, PLC in control, rejected, waiting</td><td></td><td></td><td></td></tr>
+</table>
+<p>AxisFlags: bit 0 used, 1 on the timeline, 2 enabled, 3 HLFB asserted, 4 motor fault, 5 alerts, 6 electronic gear,
+7 on its + limit, 8 on its − limit, 9 homed, 10 homing.</p>
+
+<h2><a name="codes"></a>Fault and reject codes</h2>
+<table>
+<tr><th>FaultCode</th><th>Latched until CLEAR_FAULT</th></tr>
+<tr><td>1</td><td>the estop opened</td></tr>
+<tr><td>2</td><td>a motor faulted (AxisFlags say which)</td></tr>
+<tr><td>3</td><td>a motor's HLFB did not assert on enable</td></tr>
+<tr><td>4</td><td>the connection dropped while the PLC had control</td></tr>
+<tr><td>5</td><td>a limit stopped the cam (the motors stay enabled)</td></tr>
+<tr><td>6</td><td>homing failed (the motors stay enabled)</td></tr>
+<tr><td>7</td><td>a timeline wait timed out: stopped at it (the motors stay enabled)</td></tr>
+</table>
+<table>
+<tr><th>RejectCode</th><th>Why nothing happened</th></tr>
+<tr><td>10</td><td>no profile on the board</td></tr>
+<tr><td>11</td><td>needs PLC_CONTROL</td></tr>
+<tr><td>12</td><td>motors disabled (ENABLE, or SIMULATE)</td></tr>
+<tr><td>13</td><td>busy: moving, or an upload in progress</td></tr>
+<tr><td>14</td><td>out of range (negative, or a jog target)</td></tr>
+<tr><td>15</td><td>CrankRpm, but the master is an encoder</td></tr>
+<tr><td>16</td><td>CutLength, but the project is not in cut-length mode</td></tr>
+<tr><td>17</td><td>CutLength shorter than CutLengthMin</td></tr>
+<tr><td>18</td><td>over the limit: rpm above the crank motor's max, override above 1000 %</td></tr>
+<tr><td>19</td><td>a fault is latched (CLEAR_FAULT first)</td></tr>
+<tr><td>20</td><td>estop open</td></tr>
+<tr><td>21</td><td>TRIGGER, but the project's trigger is not the PLC</td></tr>
+<tr><td>22</td><td>START, but an axis is not on its cam position: moved with <a href="09-board.html#axisjog">Axis jog</a>, or a timeline axis left part-way through the cycle (a second STOP, ABORT, a fault, a lost connection). JOG the timeline to 0, then START</td></tr>
+<tr><td>23</td><td>START or TRIGGER, but an axis that requires homing isn't homed (HOME first)</td></tr>
+<tr><td>24</td><td>START, TRIGGER or JOG with an axis on a limit (jog it off first)</td></tr>
+</table>
+
+<h2><a name="network"></a>Network settings from EtherNet/IP tools</h2>
+<p>The board's address, DHCP / static and host name can be set from any EtherNet/IP tool (the TCP/IP Interface
+object), as well as with <code>set</code> on the console. A new address takes effect after the board restarts by
+itself; the host name at once. Both are refused while the motors are enabled or anything moves. Identity Reset type 1
+puts the network back to DHCP (192.168.0.110 when no DHCP server answers).</p>

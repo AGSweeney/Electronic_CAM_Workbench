@@ -1,0 +1,47 @@
+<h1>Motion laws</h1>
+<p>A segment's <b>law</b> is the shape of its move from one position to the next. The choice decides how hard
+the motor and the machine work: a law that starts and ends gently lets the machine run faster without
+knocks.</p>
+<p align="center"><img src="images/laws.png" width="820"></p>
+<p class="caption">Five laws over one move, at the same rise and time: position, velocity and acceleration.</p>
+
+<h2><a name="table"></a>The laws</h2>
+<table>
+<tr><th>Law</th><th>Ends at rest</th><th>Use it for</th></tr>
+<tr><td><b>Dwell</b></td><td>—</td><td>no motion; its end is tied to its start</td></tr>
+<tr><td><b>Cycloidal</b></td><td>yes, zero acceleration</td><td>a safe default: smooth start and stop</td></tr>
+<tr><td><b>Modified sine</b></td><td>yes</td><td>heavier loads and index drives: lower peak velocity</td></tr>
+<tr><td><b>Modified trapezoid</b></td><td>yes</td><td>fast, light moves: the lowest peak acceleration</td></tr>
+<tr><td><b>Polynomial 3-4-5</b></td><td>yes</td><td>a smooth polynomial, a little gentler on velocity than cycloidal</td></tr>
+<tr><td><b>Polynomial 4-5-6-7</b></td><td>yes, and zero jerk</td><td>the smoothest, for slightly higher peaks</td></tr>
+<tr><td><b>Simple harmonic</b></td><td>yes, but acceleration jumps</td><td>oscillating out and back</td></tr>
+<tr><td><b>Linear</b></td><td>no</td><td>constant speed: riding a conveyor or the line between other moves</td></tr>
+<tr><td><b>Blend (match neighbours)</b></td><td>no</td><td>joining a dwell to a linear sync smoothly (a flying saw's ramp)</td></tr>
+<tr><td><b>Cubic spline</b></td><td>no</td><td>a smooth curve through points you give (measured data, a drawn shape)</td></tr>
+</table>
+
+<h2><a name="choose"></a>Choosing</h2>
+<ul>
+<li><b>Start with Cycloidal.</b> It starts and ends with zero acceleration, so it joins dwells without a knock.</li>
+<li><b>Peaks too high?</b> Modified trapezoid lowers the peak acceleration (motor torque); modified sine lowers
+the peak velocity (motor speed). Or give the move more of the cycle.</li>
+<li><b>Linear</b> has velocity jumps at its ends unless its neighbours match its speed. Put a <b>Blend</b>
+segment on each side: a Blend starts and ends at its neighbours' velocities with zero acceleration, so
+dwell → Blend → Linear → Blend → return runs smoothly.</li>
+<li>Between two rests a Blend is the 3-4-5 polynomial.</li>
+<li><b>Cubic spline</b> is the one law that works across segments: consecutive Spline segments make a single
+smooth curve through all their knots, so moving one knot reshapes its neighbours. Use it when the shape comes from
+points rather than from a rise and a dwell.
+<ul>
+<li>Next to any other segment it takes that segment's velocity, so there is never a velocity step. It can still have
+an <i>acceleration</i> step there, and the Analysis page says so. A Blend at the end of the run removes it.</li>
+<li>Make every segment of a repeating axis a Spline and the curve closes on itself with no step at all, through
+the wrap too.</li>
+<li>A spline can swing past the points it goes through, most of all after a steep rise into a flat stretch. The
+Analysis page warns when it passes your highest or lowest knot by over 2% of their range: add a knot, or end the run
+with a dwell.</li>
+</ul></li>
+</ul>
+<p class="note">The Analysis page flags any velocity step (infinite acceleration) and acceleration step
+(infinite jerk) the laws you pick leave at a knot; the diagram marks them with warning signs.</p>
+<p>The formulas are in <code>docs/MATH.md</code> in the project.</p>

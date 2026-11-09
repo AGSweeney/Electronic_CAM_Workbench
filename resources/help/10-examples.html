@@ -1,0 +1,79 @@
+<h1>Worked examples</h1>
+<p>Four real machines, each built from a blank start. Numbers are a sensible start for a bench test; change
+them for your machine.</p>
+
+<h2><a name="pusher"></a>1. A carton pusher (rise, dwell, return)</h2>
+<p><b>The machine:</b> a pusher on a 10 mm ballscrew pushes a carton 50 mm off a conveyor once per machine cycle,
+holds it while the next one arrives, and returns. An encoder (1000 lines) on the machine's main shaft gives the
+cycle.</p>
+<ol>
+<li>Open <b>File › New from guided setup…</b> and pick <b>Rise, dwell, return</b>.</li>
+<li><b>Machine cycle</b>: <i>an encoder on the machine's shaft</i>; counts per rev <b>4000</b> (4 × 1000 lines);
+expected speed <b>30 rpm</b>.</li>
+<li><b>Motor</b>: name <i>Pusher</i>, connector <b>M-0</b>, units <b>mm</b>, drive <b>Ballscrew</b>, 800 steps per rev,
+lead <b>10 mm</b> (80 counts/mm).</li>
+<li><b>Motion</b>: law <b>Cycloidal</b>, stroke <b>50 mm</b>; rise 0–120°, return 180–300°.</li>
+<li><b>Create project</b>, then <b>File › Save</b>.</li>
+</ol>
+<p align="center"><img src="images/example_pusher.png" width="820"></p>
+<p class="caption">The pusher: cycloidal rise and return, with dwells. Velocity and acceleration start and end at zero: no knocks.</p>
+<p align="center"><img src="images/example_pusher_cam.png" width="460"></p>
+<p class="caption">The same motion as the plate cam it replaces.</p>
+<p><b>Check:</b> Analysis shows 150 mm/s peak at 30 rpm and the motor at 900 rpm. To run faster, set the axis's
+velocity and acceleration limits: the Crank page then shows the highest safe speed.</p>
+
+<h2><a name="index"></a>2. An index conveyor</h2>
+<p><b>The machine:</b> a belt conveyor (50 mm pulley) advances 150 mm each cycle, then stops while a station
+works.</p>
+<ol>
+<li>Guided setup, <b>Index feed</b>; encoder or driven crank as for the pusher.</li>
+<li><b>Motor</b>: drive <b>Belt and pulley</b>, pitch diameter <b>50 mm</b>.</li>
+<li><b>Motion</b>: law <b>Modified sine</b> (lower peak speed for the belt's load), feed <b>150 mm</b> from 0° to
+180°.</li>
+</ol>
+<p align="center"><img src="images/example_index.png" width="820"></p>
+<p class="caption">An open profile: it ends 150 mm on from where it started, and the next cycle carries on from there.</p>
+<p><b>Check:</b> the profile is <i>open</i> (Axis page), so the position keeps adding up cycle after cycle. Analysis
+shows the advance per revolution.</p>
+
+<h2><a name="flying"></a>3. A flying saw</h2>
+<p><b>The machine:</b> extruded profile runs at 5 m/min under an encoder wheel (200 mm circumference, 4000 counts).
+A carriage on a 10 mm ballscrew rides the line while a saw (second motor, 5 mm screw) plunges 6 mm. Pieces of
+600 mm, 3 mm blade. The saw motor (IO-0) runs during the cut.</p>
+<ol>
+<li>Guided setup, <b>Flying cut-off</b>.</li>
+<li><b>Line and cut</b>: counts per rev <b>4000</b>, wheel <b>200 mm</b>, cut length <b>600 mm</b>, kerf <b>3 mm</b>,
+line speed <b>5 m/min</b>.</li>
+<li><b>Carriage motor</b>: <b>M-0</b>, ballscrew, lead <b>10 mm</b>.</li>
+<li><b>Saw motor</b>: <b>M-1</b>, ballscrew, lead <b>5 mm</b>; keep <i>Switch output IO-0 on while riding the line</i>.</li>
+<li><b>Motion</b>: catch up in <b>36°</b>, ride for <b>36°</b>, return in <b>78°</b>, plunge <b>6 mm</b>.</li>
+</ol>
+<p align="center"><img src="images/wizard_saw.png" width="760"></p>
+<p class="caption">The saw motor has its own step: its connector, mechanics and limits.</p>
+<p align="center"><img src="images/example_flying.png" width="820"></p>
+<p class="caption">The flying saw's carriage: wait, blend up to line speed, ride the line through the sync while the saw (IO-0) is on, blend down and return.</p>
+<p align="center"><img src="images/example_flying_crank.png" width="760"></p>
+<p class="caption">The Crank page in cut-length mode: counts per mm, the wait that stretches, and the shortest piece.</p>
+<p><b>Run it:</b> upload, tick <b>Simulate</b>, <b>Start</b>, then <b>Run</b> the <b>Sim encoder</b> at 5 m/min. Change
+the <b>Cut length</b> on the Board page while it runs: the next piece takes the new length. See
+<a href="08-cutlength.html">cut-length mode</a>.</p>
+
+<h2><a name="pickplace"></a>4. A triggered transfer (timeline)</h2>
+<p><b>The machine:</b> a belt-driven transfer moves a part 200 mm when a sensor on <b>IO-0</b> sees it, holds it
+0.4 s, and comes back. No machine shaft: the timeline times it.</p>
+<ol>
+<li>Guided setup, <b>Triggered move</b>.</li>
+<li><b>Trigger</b>: a digital input, <b>IO-0</b>, rising edge; one run per trigger.</li>
+<li><b>Motor</b>: belt, pitch diameter <b>25 mm</b>.</li>
+<li><b>Motion</b>: law <b>Modified trapezoid</b>, distance <b>200 mm</b>; out in <b>0.6 s</b>, hold <b>0.4 s</b>,
+back in <b>0.6 s</b>.</li>
+</ol>
+<p align="center"><img src="images/wizard_trigger.png" width="760"></p>
+<p class="caption">Guided setup for a triggered move: the trigger step, here a rising edge on IO-0.</p>
+<p align="center"><img src="images/example_triggered.png" width="820"></p>
+<p class="caption">The timeline move: out, hold, back; it rests at the end until the next trigger.</p>
+<p><b>Add a gripper:</b> double-click lane IO-1 in the Outputs band at 0.6 s and drag its end to 1.0 s: the gripper
+closes for the hold. The <b>Pick and place</b> example (<b>File › Open example</b>) has three axes and two outputs
+done this way.</p>
+<p align="center"><img src="images/timing_view.png" width="700"></p>
+<p class="caption">The Pick and place example in the Timing view: X travel, Z lift and a vacuum rotate on one timeline.</p>

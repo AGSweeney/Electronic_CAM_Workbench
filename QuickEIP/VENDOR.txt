@@ -1,0 +1,26 @@
+QuickEIP (https://github.com/AGSweeney/QuickEIP) vendored, 2.0 library layout, on 2026-11-02.
+
+Copied: include/, src/, ports/clearcore/, ports/lwip_raw/, README.md, LICENSE, docs/INTEGRATION.md,
+docs/PORTING.md. The other ports, the examples and the tests stay upstream.
+
+Upstream at copy time: no commits yet (working tree), so there is no commit id. It includes, made upstream
+just before this copy:
+  - Multiple Service Packet (0x0A) to the Message Router, with tests in tests/test_core.c
+    (TestMultipleService); test_core and test_loopback pass, also under ASan / UBSan.
+  - MIT LICENSE and a copyright line at the top of every source file.
+It has EipAdapterConfig.allow_change and the ClearCore host-name setter.
+
+Updated from upstream on 2026-11-03 (include/eip.h, src/eip_server.c): EipAdapterView.peer_ip, the
+originator's own address (originator_ip is where T->O goes, a multicast group for a multicast connection);
+test_core and test_loopback pass under ASan / UBSan.
+
+Updated from https://github.com/AGSweeney/QuickEIP at commit eee1d50 on 2026-11-04: the same set of files. For an
+adapter: a Forward Open key with minor revision 0 is accepted, a failed Forward Open or Forward Close reply carries
+the connection triad, the O->T API in the reply is the requested RPI, a reply that is too large is a CIP error.
+
+Updated from https://github.com/AGSweeney/QuickEIP at commit b1ca28f on 2026-11-05: the same set of files, plus
+ports/windows/ for tools/ecam_bench. The firmware binary is unchanged.
+
+Build settings used by Firmware/ECamFirmware: EIP_ADAPTER_MAX_CLIENTS=2.
+
+Don't edit this copy; change QuickEIP upstream and copy again.

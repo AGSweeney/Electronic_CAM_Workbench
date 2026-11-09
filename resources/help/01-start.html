@@ -1,0 +1,60 @@
+<h1>Getting started</h1>
+<p>The <b>Electronic CAM Workbench</b> designs, checks and runs electronic cam profiles on a Teknic
+<b>ClearCore</b>. A follower motor moves as a function of a <b>crank</b> (an encoder on the machine, or a
+crank motor the ClearCore drives itself) or of a <b>timeline</b> (time from a trigger). You draw the motion,
+the app checks it (velocity jumps, motor speed, limits, cam pressure angle), and the ClearCore keeps it in
+flash and runs it from its 5 kHz sample interrupt, with nothing streamed while it runs.</p>
+<p class="warn"><b>Experimental.</b> Not certified for production or safety-critical use. Keep a physical
+emergency stop in the circuit (the firmware can watch an input as one: A-9 unless you pick another).</p>
+
+<h2><a name="startpage"></a>The start page</h2>
+<p>After the splash screen the <b>start page</b> offers the ways in:</p>
+<p align="center"><img src="images/start.png" width="720"></p>
+<p class="caption">The start page: guided setup, a new project, an existing file, a bundled example or a recent project.</p>
+<ul>
+<li><b>Guided setup…</b> walks you from a machine motion to a working project (below). The best start.</li>
+<li><b>New project</b>: one axis with a basic rise, dwell and return, ready to edit by hand.</li>
+<li><b>Open project…</b>: an <code>.ecam</code> file saved earlier.</li>
+<li><b>Examples</b>: projects built into the program (double-click one). Save it to keep your own copy.</li>
+<li><b>Recent projects</b>: the last ten you opened or saved.</li>
+</ul>
+<p>Untick <i>Show this window when the program starts</i> to go straight to a new project;
+<b>File › Start page…</b> brings it back.</p>
+
+<h2><a name="guided"></a>Guided setup</h2>
+<p><b>Guided setup</b> (start page, or <b>File › New from guided setup…</b>, <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>N</kbd>)
+asks a few plain questions, one step at a time, and builds the project. Each step explains what it needs.</p>
+<p align="center"><img src="images/wizard_template.png" width="760"></p>
+<p class="caption">Step 1: pick the motion closest to your machine. The preview shows its shape.</p>
+<table>
+<tr><th>Template</th><th>Master</th><th>For</th></tr>
+<tr><td><b>Rise, dwell, return</b></td><td>crank</td><td>a pusher, an ejector, a classic cam follower</td></tr>
+<tr><td><b>Index feed</b></td><td>crank</td><td>a conveyor or roll feed that advances a fixed length each cycle</td></tr>
+<tr><td><b>Oscillate</b></td><td>crank</td><td>continuous out and back: a traverse, a wrapping arm</td></tr>
+<tr><td><b>Triggered move</b></td><td>timeline</td><td>out, hold and back once per input: pick and place, a gate</td></tr>
+<tr><td><b>Flying cut-off</b></td><td>encoder on the line</td><td>a carriage that rides the material while a saw cuts</td></tr>
+</table>
+<p>Then the steps ask what times the cycle (an encoder, a crank motor, a trigger, or the line), the motor and
+its mechanics (one step per motor), and the motion itself, with a live preview and the peak velocity,
+acceleration and motor speed:</p>
+<p align="center"><img src="images/wizard_motion.png" width="760"></p>
+<p class="caption">The motion step: stroke, where in the cycle it moves, and the motion law. The card below the preview shows the peaks.</p>
+<p>The <b>Review</b> step lists the settings and any problems (two things on one motor connector, a velocity
+jump, a limit exceeded, a fast motor) and what to do next. <b>Create project</b> opens it in the editor,
+unsaved.</p>
+<p align="center"><img src="images/wizard_review.png" width="760"></p>
+<p class="caption">The Review step: the settings, any problems, and what to do next.</p>
+
+<h2><a name="tour"></a>From idea to motion in five steps</h2>
+<ol>
+<li><b>Make the profile</b>: guided setup, an example, or draw it (<a href="04-profile.html">Building a profile</a>).</li>
+<li><b>Check it</b>: the Analysis page and the warning signs in the diagram flag jumps and limits
+(<a href="04-profile.html#analysis">Analysis</a>).</li>
+<li><b>Save it</b>: <b>File › Save</b> (<kbd>Ctrl</kbd>+<kbd>S</kbd>).</li>
+<li><b>Upload it</b>: in the board strip at the bottom, <b>Connect</b> and <b>Upload</b>
+(<a href="09-board.html">Running on the ClearCore</a>).</li>
+<li><b>Run it safely</b>: tick <b>Simulate</b> and <b>Start</b> first (nothing moves), then untick Simulate,
+<b>Enable</b> and <b>Start</b>.</li>
+</ol>
+<p class="note">New to electronic cams? Read <a href="02-window.html">The window</a> and
+<a href="03-masters.html">Masters</a>, then try a <a href="10-examples.html">worked example</a>.</p>

@@ -1,0 +1,262 @@
+<h1>Running on the ClearCore</h1>
+<p>The ClearCore runs the profile itself from flash (firmware <code>ECam_Firmware</code>); the app only talks to it
+to upload, start, stop and watch. The <b>board strip</b> at the bottom of the window runs it, and the <b>Board</b> page in
+the project tree holds the rest.</p>
+
+<h2><a name="connect"></a>Connecting</h2>
+<p>Open the <b>Board</b> page, then:</p>
+<ul>
+<li><b>Ethernet</b>: <b>Discover</b> finds the board, or type its IP, then <b>Connect</b> in the strip.</li>
+<li><b>USB</b>: pick the ClearCore's COM port, then <b>Connect</b>.</li>
+</ul>
+
+<h2><a name="strip"></a>The board strip</h2>
+<p align="center"><img src="images/board_strip.png" width="820"></p>
+<p class="caption">The board strip at the foot of the window.</p>
+<p>Always in view, whatever the tree has open. The light is grey when not connected, green when connected, amber when a
+PLC has control, and red on a fault.</p>
+<table>
+<tr><th>Button</th><th>What it does</th></tr>
+<tr><td><b>Connect</b></td><td>Connects to the board chosen on the Board page, or disconnects.</td></tr>
+<tr><td><b>Upload</b></td><td>Sends the project. The board keeps it in flash and loads it at power-up, motors disabled.</td></tr>
+<tr><td><b>Enable</b> / <b>Disable</b></td><td>The profile's motors. <b>Clear fault</b> appears while one is latched.</td></tr>
+<tr><td><b>Start</b></td><td>Crank axes engage (a driven crank ramps up) and the timeline arms. <b>Trigger</b> appears with
+timeline axes and starts the armed timeline.</td></tr>
+<tr><td><b>Stop</b> / <b>Abort</b></td><td><b>Stop</b>: a timeline finishes its cycle and rests at its end, back where the next Start begins; <b>Stop</b> again while it finishes ramps it to rest at once. A crank ramps to rest. <b>Abort</b> stops at once. After a stop part-way through a timeline's cycle, <b>Start</b> waits until its axes are back at their start: <b>Hand jog</b> the timeline to 0, or <a href="#axisjog">To cam position</a>.</td></tr>
+</table>
+<p>The status beside the light shows the board's state, whether its profile is this project, the outputs that are on, and
+warns when the profile is not in flash or no estop is set. With a PLC connected over EtherNet/IP it shows
+<i>PLC … connected</i>, or <i>PLC … in control</i>: the board then refuses Upload, Enable, Start and the rest, and those
+buttons go grey; Stop, Abort and Disable still work (see <a href="15-plc.html">PLC (EtherNet/IP)</a>).</p>
+
+<h2><a name="rows"></a>The Board page</h2>
+<p align="center"><img src="images/board_panel.png" width="820"></p>
+<p class="caption">The Board page: connection, encoder, profile, hand jog, firmware, estop and network.</p>
+<table>
+<tr><th>Row</th><th>What it does</th></tr>
+<tr><td><b>Connection</b></td><td>Ethernet or USB, the address or COM port, and <b>Discover</b>.</td></tr>
+<tr><td><b>Encoder</b></td><td>The live count (encoder master), in revolutions and, in cut-length mode, mm of line. <b>Zero</b> measures from here (in the app only).</td></tr>
+<tr><td><b>Sim encoder</b></td><td>While simulating with an encoder master: a speed and <b>Run</b> / <b>Stop</b>; the board follows a simulated count.</td></tr>
+<tr><td><b>Profile</b></td><td><b>Download</b> opens the board's project. <b>Forget</b> erases the stored copy. Tick <b>Simulate</b> to run without stepping the motors or switching outputs.</td></tr>
+<tr><td><b>Cut length</b></td><td>Cut-length mode: the finished piece length and <b>Set</b> (from the next cut); the length being cut, the next and the shortest.</td></tr>
+<tr><td><b>Timeline</b></td><td><b>Trigger on Start</b> makes Start fire the timeline too, and what the timeline is doing.</td></tr>
+<tr><td><b>Hand</b></td><td><b>Hand jog</b>: drag the cam or scrub the diagram and the board's master goes there with every motor following its profile. <b>Crank → 0°</b>. <b>Axis jog…</b> moves each axis on its own (<a href="#axisjog">below</a>). <b>Follow board</b> moves the cursor with the board.</td></tr>
+<tr><td><b>Firmware</b></td><td>The board's firmware against this app's, and <b>Update…</b> (see <a href="#firmware">Updating the firmware</a>).</td></tr>
+</table>
+
+<h2><a name="axisjog"></a>Axis jog</h2>
+<p><b>Axis jog…</b> opens a card for each motor connector, M-0 to M-3, with or without a profile on the board. The
+ClearCore steps the motors, as it does for the cam: the motors' USB isn't used.</p>
+<p align="center"><img src="images/axis_jog.png" width="760"></p>
+<p class="caption">X travel enabled and homed; Z lift jogged 12.49 mm off its cam position; Vacuum rotate disabled; M-3
+has no axis in the profile.</p>
+<ul>
+<li>A <b>profile axis</b> shows its name and moves in its units. A motor <b>not in the profile</b> moves in
+revolutions: set its counts per revolution (as in ClearPath-MSP) on its card. A <b>driven crank</b>'s motor only
+enables: <b>Hand jog</b> turns it, with the axes following.</li>
+<li><b>Enable</b> / <b>Disable</b> one motor. The others stay as they are.</li>
+<li>Hold <b>− Jog</b> or <b>Jog +</b> to jog at the <b>Speed</b>; let go to stop. If the board stops hearing from the panel
+(a cable pulled, the app closed) it stops the jog by itself after half a second.</li>
+<li><b>− Step</b> / <b>Step +</b> move the <b>Step</b> distance, exactly. Steps on several motors run at once.</li>
+<li><b>Zero</b> makes the position here 0 (an axis: the profile's start).</li>
+<li><b>To cam position</b> moves an axis back where the cam has it.</li>
+<li><b>Home</b> homes an axis with a home switch (<a href="06-axes.html#homing">Homing</a>); its card says
+<i>homed</i> or <i>not homed</i>. <b>Home all</b>, at the foot, homes every axis with a switch in their order. While it
+homes the button stops it.</li>
+</ul>
+<p>The cam engages from wherever the motors are. So after an axis has been jogged, <b>Start</b> and <b>Hand jog</b> wait
+until it is back on its cam position: its card says how far off it is. Move it back, or zero it where it belongs. If you press Start anyway, the
+Workbench lists every axis that is off and offers <b>Move to cam positions</b>: it moves them back one at a time, M-0
+first, each at its Axis jog speed, and leaves Start to you. The motors must be enabled (or the board in simulate).
+A gear or an open profile has no fixed place and is never held up.</p>
+<p class="note">Nothing in the panel works while a cam runs, waits on its trigger, or hand jogs, while the PLC has
+control, or with a fault latched. The panel then shows why, with <b>Stop</b> and <b>Disable all motors</b>, which always
+work. The board can't tell where a motor really is: after a power cycle or a new profile it takes every axis to be at
+the profile's start.</p>
+
+<h2><a name="estop"></a>Estop</h2>
+<p>The <b>Estop</b> row at the top right of the Board page sets the board's estop: <b>Off</b>, <b>Fault when low</b> (a
+normally closed estop, or a jumper to 24 V, holds its input high) or <b>Fault when high</b>, and its <b>input</b>, any of
+IO-0..A-12 (A-9 unless you pick another). Beside it, what that input reads now, and whether that is OK or open with the
+setting chosen, so you can check the wiring before turning it
+on. It saves on the board at once, over USB or Ethernet, with every motor disabled; turning it off asks first. The input
+list greys the pins this project uses, and the board refuses one its profile uses (an output, the trigger, the Encoder
+Adapter's DI-6..DI-8 with an encoder master). An open
+estop disables the motors and latches a fault, and enable is refused until it closes.</p>
+
+<h2><a name="operator"></a>Operator inputs</h2>
+<p>A machine run without the Workbench or a PLC needs its own buttons. <b>Panel › Operator inputs…</b> on the Board page
+puts them on the ClearCore's inputs:</p>
+<p align="center"><img src="images/operator_inputs.png" width="350"></p>
+<p class="caption">A panel with all five; Start is being pressed. Disable and Stop are wired normally closed.</p>
+<table>
+<tr><td><b>Enable</b></td><td>Enables the motors of the job on the board, as Enable.</td></tr>
+<tr><td><b>Disable</b></td><td>Disables them, as Disable. It always works, even while the PLC has control. Wire it
+normally closed: a broken wire then disables.</td></tr>
+<tr><td><b>Fault reset</b></td><td>Clears a latched fault, as Clear fault.</td></tr>
+<tr><td><b>Start</b></td><td>As Start. With a timeline whose trigger is <i>Command</i> it triggers it too: a panel has no
+Trigger button.</td></tr>
+<tr><td><b>Stop</b></td><td>As Stop: a timeline finishes its cycle; pressed again, it stops at once. It always works.
+Wire it normally closed.</td></tr>
+</table>
+<p>Each is an input or <i>Off</i>, with its contact: <b>NC</b> is pressed when the input opens, <b>NO</b> when it closes.
+<b>Enable</b> is either <i>momentary</i> (an Enable button and a Disable button) or <i>maintained</i> (a switch: on
+enables, off disables). The window shows each input's state, and greys the inputs the job uses, the estop's and the
+other operator inputs'.</p>
+<ul>
+<li><b>Edges, never levels at power-up.</b> Enable, Fault reset and Start act when the button is pressed, not when it
+is already held as the board starts: a switch left on doesn't enable a machine by itself; turn it off and on.</li>
+<li>Held, <b>Disable</b> keeps Enable from acting and <b>Stop</b> keeps Start from acting.</li>
+<li>A press must last 10 ms: contact bounce doesn't count.</li>
+<li>While the <b>PLC has control</b>, Enable, Fault reset and Start are the PLC's: the panel's are ignored. Otherwise
+the panel and the Workbench both work.</li>
+</ul>
+<p>These are the board's settings, like the estop: they stay with the board whatever job it runs, and change only with
+the motors disabled and nothing moving. The board refuses a job that uses an operator input's pin, and the Workbench keeps
+those pins off the Inputs page (<i>Operator: Enable</i>), the trigger list, the Outputs and Waits pages and the switch
+wizard, remembering them from the last board it saw.</p>
+
+<h2><a name="network"></a>Network settings</h2>
+<p>The right of the Board page shows the board's network settings once connected, and the address it is using now. To
+change them, connect over <b>USB</b>:</p>
+<ol>
+<li>Choose <b>DHCP</b> or <b>Static</b>, and set the IP address, netmask and gateway (0.0.0.0 for none). On DHCP the
+address is the <b>fallback</b>: the board uses it if no server answers, which takes about 13 seconds.</li>
+<li>Leave <b>Host name</b> empty for the default, <code>ecam-</code> and the last 3 bytes of the MAC.</li>
+<li><b>Apply and restart</b>. Network settings only take effect when the board restarts, so the app restarts it,
+reconnects and reads them back. <i>Applied.</i> means the board kept them.</li>
+</ol>
+<p>They can be changed with the motors disabled, nothing moving and no PLC in control. The app checks them first: a bad
+address, a mask with holes or a gateway on another subnet can't be applied, and the reason shows beside the button.</p>
+<p class="note"><b>Why USB only:</b> a new address would take away the Ethernet link it was set on. USB reaches a board
+whatever its address, so it is also the way back to a board on the wrong network. A PLC or EtherNet/IP tool can change
+them too (see <a href="15-plc.html#network">PLC (EtherNet/IP)</a>).</p>
+<p class="warn">The restart drops any PLC connection. It comes back by itself if the board keeps the address the PLC
+is set to; otherwise change the PLC's setting to match.</p>
+
+<h2><a name="safe"></a>A safe first run</h2>
+<ol>
+<li><b>Upload</b>; the status says <i>profile … = this project</i>.</li>
+<li>Tick <b>Simulate</b>, <b>Start</b>: watch the cam and the diagram follow (nothing moves, no outputs switch).</li>
+<li><b>Stop</b>. Untick Simulate, <b>Enable</b>; check the motors hold.</li>
+<li>Use <b>Hand jog</b> to move slowly through the cycle and watch the machine.</li>
+<li>Then <b>Start</b> at a low speed, and raise it towards the speed Analysis allows.</li>
+</ol>
+<p class="warn"><b>The estop.</b> Until one is wired and set, the status line says <i>no estop</i>. Set it with
+<a href="#estop">Estop</a> on the Board page.</p>
+
+<h2><a name="inputs"></a>Inputs</h2>
+<p><b>Inputs</b> in the project tree sets up the ClearCore's own inputs for homes and limits, the same way as the
+<a href="#ccio">CCIO-8 inputs</a>: <b>IO-0</b> to <b>IO-5</b>, <b>DI-6</b> to <b>DI-8</b> and <b>A-9</b> to <b>A-12</b>. Give an
+input a <b>Name</b>, a <b>Function</b> (<i>Home</i>, <i>Limit +</i> or <i>Limit −</i>), its <b>Axis</b> and its <b>Contact</b>
+(<i>NC</i>, normally closed, or <i>NO</i>, normally open). Connected to the board, <b>State</b> shows each <i>On</i> or <i>Off</i>.
+The limits act on the board: see <a href="#limits">Limits</a>; a home switch homes its axis: see
+<a href="06-axes.html#homing">Homing</a>.</p>
+<p><b>Set up switches…</b> at the top opens the <a href="#switchwizard">switch wizard</a>.</p>
+<p>A pin can do one job, so some can't be inputs:</p>
+<ul>
+<li>an IO pin with an output pulse (<i>Output</i>), and an input's pin is not offered on the <a href="07-outputs.html#panel">Outputs page</a>;</li>
+<li>the timeline's trigger input (<i>Timeline trigger</i>), and an input's pin is greyed in the trigger list;</li>
+<li>DI-6 to DI-8 while the crank follows an encoder (<i>Encoder Adapter</i>). The other way round, with any of them set up as
+an input, <b>External encoder</b> can't be picked on the Crank page.</li>
+</ul>
+<p>The board's estop input can't be anything else: the Inputs page shows it as <i>Estop</i>, and the trigger list and
+the Outputs page don't offer it. The board says which it is when connected, and the app remembers it, so the checks hold
+offline too (<i>Estop (last seen)</i>). The estop can't move onto an input the board's profile uses. An axis can have one home and
+one limit each way, counting the CCIO-8's and these together: the same job on two inputs is marked in the tree.</p>
+
+<h2><a name="ccio"></a>CCIO-8 inputs</h2>
+<p>CCIO-8 expansion boards chain from <b>COM-1</b>, up to 8, for the Home and Limit switches. Their limits act as the
+board's own do (<a href="#limits">Limits</a>).</p>
+<p align="center"><img src="images/ccio_page.png" width="820"></p>
+<p class="caption">The CCIO-8 page: the boards on COM-1 and their inputs.</p>
+<ol>
+<li>Open <b>CCIO-8</b> in the project tree and set <b>Boards on COM-1</b>. Each board gets a node under it.</li>
+<li>For each input in use, give it a <b>Name</b> and a <b>Function</b> (<i>Home</i>, <i>Limit +</i> or <i>Limit −</i>), pick its
+<b>Axis</b> and its <b>Contact</b>. These are kept with the project. An axis can have one of each: the same job on two inputs is marked in the tree.</li>
+<li>Connected to the board, <b>State</b> shows each input <i>On</i> or <i>Off</i>, about twice a second, and the line at the top
+says whether the link is good and the board found the number of boards the project has.</li>
+</ol>
+<p class="note"><b>Use normally closed limits.</b> A normally closed switch reads <i>On</i>, and a tripped one or a cut wire
+reads <i>Off</i>, so a broken wire stops the axis. A normally open limit is allowed, but a cut wire reads as not
+tripped and the limit is lost without a sign: Analysis warns about each one. A broken CCIO-8 link trips every limit on it.</p>
+<p>The board looks for CCIO-8s when it starts, so restart it after adding one. If the link breaks while it runs, the
+page says so in red and every input reads <i>Off</i>, as a tripped sensor would, until it comes back. The ClearCore's
+lights flash the CCIO error meanwhile. It comes back by itself when the cable is plugged in, and the lights stop.</p>
+<p>The profile on the board decides whether the link is used. With no profile the link stays up, so you can see the
+inputs before making a project. A profile uploaded with 0 boards turns the link off: the page still shows the boards
+found, the inputs show a dash, and a board that drops out raises no error. Upload a project with boards to turn it on.</p>
+
+<h2><a name="limits"></a>Limits</h2>
+<p>A limit stops the machine under control: quickly, but on a ramp, so the axes stay in step and nothing is thrown.
+It acts only when its axis moves toward it, so the axis can always be driven off it.</p>
+<ul>
+<li><b>The cam running.</b> The crank or the timeline ramps to rest over the <b>Limit stop</b> time (Inputs page, 0.1 s by
+default), and every axis follows it. With an external encoder as the master, which can't be slowed, each axis lets go
+and ramps to rest by itself over the same time. The status line shows <i>limit + on Slide (IO-3)</i>, and the motors
+stay enabled.</li>
+<li><b>Clear</b> it, then use <a href="#axisjog">Axis jog</a> to move the axis off the switch: the jog button toward the
+limit is greyed while it is tripped. Start is refused while an axis is on a limit.</li>
+<li><b>Axis jog</b> toward a limit that trips just stops that axis; nothing faults.</li>
+<li><b>Simulate</b> only shows a limit tripping; nothing stops.</li>
+</ul>
+<p>The axis travels on past the switch while it ramps down. <b>Overtravel at peak speed</b>, beside Limit stop, is how
+far that is for the fastest axis at the profile's top speed: leave at least that much room between each limit switch
+and the hard end. A shorter stop time travels less, but stops harder. The Status panel under the project tree shows
+<i>Limit +</i> or <i>Limit −</i> for an axis on one.</p>
+
+<h2><a name="switchwizard"></a>The switch wizard</h2>
+<p><b>Tools › Set up limits and homing…</b> (or <b>Set up switches…</b> on the Inputs page) sets up one axis's switches
+from the wiring, and proves each one by moving the axis to it. Connect to the board and upload the project first.</p>
+<p align="center"><img src="images/switch_wizard.png" width="620"></p>
+<p class="caption">The Direction step: both limits reached the way their jobs say, the home switch seen on the − side.</p>
+<ol>
+<li><b>Axis.</b> Pick the axis, tick the switches it has and set a slow <b>Setup speed</b>.</li>
+<li><b>Find each switch.</b> Trip each switch by hand when asked, and let go: the input that changed is that switch's.
+An input that is already an output, the trigger, the estop or another axis's switch is turned down.</li>
+<li><b>Contact.</b> Each switch's level at rest gives its contact (<i>On</i> at rest: normally closed). Check it.</li>
+<li><b>Direction.</b> <b>Enable</b> the motor and hold <b>Jog +</b> or <b>Jog −</b>. The board stops the axis at the first
+switch it reaches, and that proves the switch: the + limit must be reached going +. If the axis reaches the other limit,
+the wizard asks whether it moved toward the end where you tripped that limit by hand. <i>Yes</i>: the switches were the other way
+round, and it swaps them. <i>No</i>: the motor runs the other way, and it reverses the axis's motor and uploads. A home
+switch on the way is noted, with its side.</li>
+<li><b>Limits</b> (an axis with limits). <b>Next</b> from Direction uploads the switches, after asking, and the
+board's own limits take over. <b>Enable</b> (the upload turned the motor off), then hold <b>Jog +</b> until the + limit
+stops the axis, and jog back off it; the same with <b>− Jog</b>. The wizard shows how far past each switch the axis ran
+at the setup speed, the travel between the switches, and how far a limit stop runs at the profile's top speed.</li>
+<li><b>Home</b> (an axis with a home switch). The direction is the side the switch was seen on; the speeds start from
+the setup speed, or the axis's own if it had homing set up; the search length is a little over the travel the Limits
+step measured. Set the <b>Home position</b> and the rest (as in <a href="06-axes.html#homing">Homing</a>), then
+<b>Home 5 times</b>: it uploads, homes the axis that many times, and shows the spread of the positions the switch
+latched at. A failure stops it and says why.</li>
+<li><b>Review.</b> <b>Apply</b> writes the switches and the homing settings into the project (one undo step) and
+uploads it.</li>
+</ol>
+
+<h2><a name="firmware"></a>Updating the firmware</h2>
+<p>The app and the board's firmware go together, and the app carries the firmware it needs. When they differ, the
+Firmware row and the status line say so in amber. <b>Update…</b> on the Board page, or
+<b>Tools ▸ Update board firmware</b>, puts it on over USB. It also installs a new ClearCore.</p>
+<p align="center"><img src="images/firmware_update.png" width="560"></p>
+<p class="caption">Updating the board's firmware over USB.</p>
+<ol>
+<li>Connect the ClearCore's USB cable: the firmware only goes on over USB, even when the app is connected to the board over Ethernet. If the app is connected over USB, it lets go of the port when this window opens, so the update can use it. If it is connected over Ethernet, it stays connected until you press Update. Either way it reconnects by itself when the window closes.</li>
+<li>Pick the port. Only ClearCores are listed, not ClearPath motors on USB. The window says what is on the board and what will happen to its profile.</li>
+<li><b>Update</b>. It takes about 10 seconds; leave the cable in and the board powered. The window stays open until it has finished.</li>
+</ol>
+<table>
+<tr><th>The board has</th><th>What happens</th></tr>
+<tr><td>ECam firmware and a profile</td><td>The profile is saved to this PC, checked against the board's hash, and put back afterwards. The motors stay disabled.</td></tr>
+<tr><td>ECam firmware, no profile</td><td>The firmware goes on; there's nothing to save.</td></tr>
+<tr><td>Other firmware, or a new board</td><td>The firmware goes on and replaces what is there. Upload a project afterwards.</td></tr>
+<tr><td>Only its bootloader</td><td>The same. The IO-0 to IO-5 lights walk while it's in the bootloader. A board that won't show up: double-tap its reset button to start it, then <b>Refresh</b>.</td></tr>
+</table>
+<p>It can't start with the motors enabled, the board running, or a PLC in control. A connected PLC loses its connection
+while the board restarts and comes back by itself. Network settings and the other board settings stay as they are.</p>
+<p class="note"><b>If an update stops part way</b>, the board may have no working firmware and vanish from USB, but its
+bootloader isn't touched and the profile stays in a file on this PC until the board has it back. Double-tap the reset
+button so the IO-0 to IO-5 lights walk, press <b>Refresh</b> and update again: the window offers <i>Put back profile …</i>,
+ticked only if the file is surely this board's.</p>
+<p><b>Without the app:</b> <code>ECam_Firmware.uf2</code> is in the <code>firmware</code> folder of the install. With the
+board in its bootloader it shows as a USB drive called <code>CLEAR_BOOT</code>; copy the file onto it and the board restarts
+with the new firmware.</p>

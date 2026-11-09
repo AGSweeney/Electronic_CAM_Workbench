@@ -1,0 +1,80 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "encoder",
+        "countsPerRev": 4000,
+        "rpm": 60,
+        "crankConnector": 3,
+        "crankRampRpmPerSec": 60,
+        "crankMaxRpm": 600,
+        "timeline": {
+            "repeat": true,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Spin",
+            "master": "timeline",
+            "duration": 1.0,
+            "units": "rev",
+            "connector": 0,
+            "countsPerUnit": 800,
+            "velMax": 10,
+            "accMax": 200,
+            "startPos": 0,
+            "closed": true,
+            "segments": [
+                {
+                    "endDeg": 0.4,
+                    "endPos": 1,
+                    "law": "modsine"
+                },
+                {
+                    "endDeg": 0.6,
+                    "endPos": 1,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 1.0,
+                    "endPos": 0,
+                    "law": "modsine"
+                }
+            ]
+        },
+        {
+            "name": "Index",
+            "master": "timeline",
+            "duration": 1.0,
+            "units": "rev",
+            "connector": 1,
+            "countsPerUnit": 800,
+            "velMax": 10,
+            "accMax": 200,
+            "startPos": 0,
+            "closed": false,
+            "segments": [
+                {
+                    "endDeg": 0.2,
+                    "endPos": 0,
+                    "law": "dwell"
+                },
+                {
+                    "endDeg": 0.8,
+                    "endPos": 0.25,
+                    "law": "poly345"
+                },
+                {
+                    "endDeg": 1.0,
+                    "endPos": 0.25,
+                    "law": "dwell"
+                }
+            ]
+        }
+    ]
+}

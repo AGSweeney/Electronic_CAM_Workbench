@@ -1,0 +1,104 @@
+$ EZ-EDS Version 3.x compatible
+$ ECam ClearCore: ECam_Firmware on a Teknic ClearCore, as an EtherNet/IP adapter (QuickEIP).
+$ Assemblies: Firmware/ECamFirmware/EipProtocol.h; the map and the rules: Firmware/PROTOCOL.md and the
+$ Workbench's user guide, chapter "PLC (EtherNet/IP)".
+$ Keep MajRev / MinRev in step with ECAM_EIP_REV_MAJOR / ECAM_EIP_REV_MINOR (Firmware/ECamFirmware/ECamConfig.h).
+
+[File]
+        DescText = "ECam ClearCore electronic cam controller";
+        CreateDate = 11-03-2026;
+        CreateTime = 12:00:00;
+        ModDate = 11-03-2026;
+        ModTime = 12:00:00;
+        Revision = 1.1;
+        HomeURL = "https://github.com/AGSweeney/Electronic_CAM_Workbench";
+
+[Device]
+        VendCode = 65000;
+        VendName = "ECam Workbench";
+        ProdType = 43;
+        ProdTypeStr = "Generic Device";
+        ProdCode = 3;
+        MajRev = 1;
+        MinRev = 11;
+        ProdName = "ECam ClearCore";
+        Catalog = "ECam ClearCore";
+
+[Device Classification]
+        Class1 = EtherNetIP;
+
+[Params]
+        Param1 =
+                0,                      $ reserved
+                ,,                      $ link path size, link path
+                0x0000,                 $ descriptor
+                0xC8,                   $ data type: UDINT
+                4,                      $ data size in bytes
+                "RPI",                  $ name
+                "Microsecond",          $ units
+                "Requested packet interval. Keep RPI x timeout multiplier at 80 ms or more: a profile upload pauses the board about 50 ms.",
+                10000,100000,20000,     $ min, max, default
+                ,,,,                    $ scaling
+                ,,,,                    $ links
+                ;                       $ decimal places
+
+[Assembly]
+        Object_Name = "Assembly Object";
+        Object_Class_Code = 0x04;
+        Assem100 =
+                "ECamSts",              $ status, board -> PLC
+                "",                     $ path
+                160,                    $ size in bytes
+                0x0000,                 $ descriptor
+                ,,                      $ reserved
+                1280,;                  $ member size in bits
+        Assem150 =
+                "ECamCmd",              $ command, PLC -> board
+                "",
+                64,
+                0x0000,
+                ,,
+                512,;
+        Assem151 =
+                "ECamCfg",              $ configuration (empty)
+                "",
+                0,
+                0x0000,
+                ,,;
+
+[Connection Manager]
+        Object_Name = "Connection Manager Object";
+        Object_Class_Code = 0x06;
+        Connection1 =
+                0x04030002,             $ trigger & transport: class 1, cyclic or change of state, exclusive owner
+                0x44640405,             $ O->T point-to-point, fixed, 32-bit run/idle header; T->O multicast or point-to-point, fixed, modeless
+                Param1,64,Assem150,     $ O->T RPI, size, format
+                Param1,160,Assem100,    $ T->O RPI, size, format
+                ,,                      $ config part 1 (none)
+                0,Assem151,             $ config part 2: size, format
+                "Exclusive Owner",      $ name
+                "",                     $ help
+                "20 04 24 97 2C 96 2C 64";  $ path: assembly class, config 151, consume 150, produce 100
+        Connection2 =
+                0x02030002,             $ class 1, cyclic or change of state, input only
+                0x44610305,             $ O->T null (heartbeat); T->O multicast or point-to-point, fixed, modeless
+                Param1,0,,              $ O->T RPI, size, format
+                Param1,160,Assem100,    $ T->O RPI, size, format
+                ,,
+                0,Assem151,
+                "Input Only",
+                "Reads the status only (no control). One owner at a time: not alongside an exclusive owner.",
+                "20 04 24 97 2C FE 2C 64";  $ path: config 151, heartbeat 254, produce 100
+
+[Port]
+        Port1 =
+                TCP,                    $ port type
+                "EtherNet/IP Port",     $ name
+                "20 F5 24 01",          $ TCP/IP Interface object
+                1;                      $ port number
+
+[Capacity]
+        MaxIOConnections = 1;
+        MaxMsgConnections = 2;
+        TSpec1 = TxRx, 64, 100;
+        TSpec2 = TxRx, 160, 100;

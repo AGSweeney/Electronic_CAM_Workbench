@@ -1,0 +1,44 @@
+<h1>Flying saws: cut-length mode</h1>
+<p>A flying saw, laser or shear cuts moving material: a carriage catches up with the line, rides it while the
+cut is made, and returns for the next piece. The piece length usually changes on the fly. Tick
+<b>Cut-length mode</b> in the Crank page. An encoder can measure the line, or a driven crank's motor can feed it.</p>
+
+<h2><a name="setup"></a>Setting it up</h2>
+<ul>
+<li><b>Encoder counts / rev</b> and the measuring <b>wheel</b> circumference give the encoder counts per mm of
+line.</li>
+<li>The profile is drawn over one cut of the <b>design length</b>: 360° is the design length, and the diagram's
+axis reads in mm of line.</li>
+<li><b>Line speed</b> (m/min) replaces the crank speed for the analysis.</li>
+<li><b>Kerf</b>: the material the cut removes (a saw blade; 0 for a shear). A finished piece is the
+cut-to-cut distance less the kerf.</li>
+</ul>
+
+<h2><a name="driven"></a>On a driven crank</h2>
+<p>With a driven crank there is no encoder: the crank motor feeds the line, and its counts are the line.
+<b>Line per motor rev</b> replaces the wheel: the line one motor revolution feeds, through its gearbox and feed
+rolls. Line speed, the ramp and the motor max read in m/min, and the motor runs at that speed through every cut,
+whatever the length. Nothing measures the line, so material slipping in the feed rolls shows up as a wrong piece
+length. Where that matters, put an encoder on the line. The <code>rpm</code> command and setpoint are cuts per
+minute at the design length.</p>
+
+<h2><a name="stretch"></a>What stretches</h2>
+<p>Only the <b>wait</b> at the start of the cycle (where every crank axis dwells) stretches or shrinks with the
+length. The rest (accelerate, sync, decelerate, return) keeps its line distance, so speeds, limits and motor
+speeds are the same at every length: the Crank page gives one <b>max line speed</b> for all lengths. Every
+crank axis must start with a dwell, and crank output pulses come after it.</p>
+<p align="center"><img src="images/example_flying.png" width="820"></p>
+<p class="caption">The carriage: wait (dwell), blend up to line speed, ride the line (linear, shaded green: the sync), blend down, return. The saw plunges inside the sync.</p>
+
+<h2><a name="cutline"></a>The cut line</h2>
+<p>The carriage leaves home while the next cut line is still upstream of the blade, accelerates (a Blend), and
+reaches line speed exactly on it at the start of the <b>sync</b> (the carriage's Linear segment); the blade then
+rides the cut line through the sync. The <b>Cut length</b> row on the Board page shows the live distance from the
+blade to the cut line, which reads <b>on the cut line</b> through the sync.</p>
+<ul>
+<li><b>Shortest piece</b> = design length − wait − kerf (the carriage must be home before the next cut);
+there is no longest. The Crank page shows it.</li>
+<li><b>On the board</b>, the Cut length row (or the <code>length</code> command) sets the finished length. It
+takes effect with the <b>next cut</b>; below the shortest piece it is refused.</li>
+</ul>
+<p>Build one from scratch in <a href="10-examples.html#flying">Worked examples: a flying saw</a>.</p>

@@ -1,0 +1,127 @@
+{
+    "format": "ECamUI",
+    "version": 1,
+    "master": {
+        "source": "drivenCrank",
+        "countsPerRev": 4000,
+        "rpm": 40,
+        "crankConnector": 0,
+        "crankRampRpmPerSec": 120,
+        "crankMaxRpm": 150,
+        "timeline": {
+            "repeat": false,
+            "speedOverride": 1.0,
+            "trigger": "command",
+            "triggerInput": 7,
+            "triggerRising": true,
+            "triggerBit": 0
+        }
+    },
+    "axes": [
+        {
+            "name": "Curve",
+            "master": "crank",
+            "units": "rev",
+            "connector": 1,
+            "countsPerUnit": 800,
+            "velMax": 15,
+            "accMax": 400,
+            "startPos": 0.0,
+            "closed": true,
+            "baseRadius": 2,
+            "rollerRadius": 0.3,
+            "segments": [
+                {
+                    "endDeg": 20,
+                    "endPos": 0.13948,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 40,
+                    "endPos": 0.38283,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 60,
+                    "endPos": 0.4875,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 80,
+                    "endPos": 0.52506,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 100,
+                    "endPos": 0.73343,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 120,
+                    "endPos": 1.0875,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 140,
+                    "endPos": 1.30209,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 160,
+                    "endPos": 1.26711,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 180,
+                    "endPos": 1.2,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 200,
+                    "endPos": 1.26711,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 220,
+                    "endPos": 1.30209,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 240,
+                    "endPos": 1.0875,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 260,
+                    "endPos": 0.73343,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 280,
+                    "endPos": 0.52506,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 300,
+                    "endPos": 0.4875,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 320,
+                    "endPos": 0.38283,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 340,
+                    "endPos": 0.13948,
+                    "law": "spline"
+                },
+                {
+                    "endDeg": 360,
+                    "endPos": 0.0,
+                    "law": "spline"
+                }
+            ]
+        }
+    ]
+}

@@ -1,0 +1,58 @@
+# CMake / build outputs
+ProjectData/build/
+build/
+out/
+CMakeUserPresets.json
+
+# IDE
+.vs/
+.vscode/
+.cursor/
+
+# Atmel/Microchip Studio build outputs (keep the generated Makefile + makedep.mk)
+/Firmware/ECamFirmware/Debug/*
+/Firmware/ECamFirmware/Release/*
+/libClearCore/Debug/*
+/libClearCore/Release/*
+/LwIP/Debug/*
+/LwIP/Release/*
+!/Firmware/ECamFirmware/Debug/Makefile
+!/Firmware/ECamFirmware/Debug/makedep.mk
+!/Firmware/ECamFirmware/Release/Makefile
+!/Firmware/ECamFirmware/Release/makedep.mk
+!/libClearCore/Debug/Makefile
+!/libClearCore/Debug/makedep.mk
+!/libClearCore/Release/Makefile
+!/libClearCore/Release/makedep.mk
+!/LwIP/Debug/Makefile
+!/LwIP/Debug/makedep.mk
+!/LwIP/Release/Makefile
+!/LwIP/Release/makedep.mk
+.vs/
+
+# Installers go to GitHub Releases
+dist/
+
+# Video and document creation tools, sources and build output (kept local, not published;
+# the finished PDFs in docs/ are tracked)
+/tools/video/
+/tools/ecam_demo/
+/tools/ecam_anim/
+/tools/docs_data/
+/docs/video/
+/docs/manual/
+/docs/theory/
+/docs/math/
+__pycache__/
+*.aux
+*.toc
+*.out
+*.synctex.gz
+
+# Development records: plans, bench status, test logs and reports (kept local, not published)
+/docs/test_logs_*/
+/docs/*_PLAN.md
+/docs/BENCH_STATUS.md
+/docs/TEST_REPORT_*
+/docs/images/test_0.8.1/
+/Firmware/ETHERNETIP_PLAN.md

@@ -1,0 +1,21 @@
+<RCC>
+  <qresource prefix="/">
+    <file>icons/ecam_app_icon.svg</file>
+    <file>icons/combo-down.svg</file>
+    <file>icons/spin-up.svg</file>
+    <file>icons/spin-down.svg</file>
+    <file>icons/check.svg</file>
+    <file>icons/lock.svg</file>
+    <file>icons/unlock.svg</file>
+    <file alias="samples/index_feed.ecam">../samples/index_feed.ecam</file>
+    <file alias="samples/driven_crank.ecam">../samples/driven_crank.ecam</file>
+    <file alias="samples/packaging_machine.ecam">../samples/packaging_machine.ecam</file>
+    <file alias="samples/pick_and_place.ecam">../samples/pick_and_place.ecam</file>
+    <file alias="samples/mixed_timeline.ecam">../samples/mixed_timeline.ecam</file>
+    <file alias="samples/flying_cutoff.ecam">../samples/flying_cutoff.ecam</file>
+    <file alias="samples/true_flying_cutoff.ecam">../samples/true_flying_cutoff.ecam</file>
+    <file alias="samples/variable_length_cutoff.ecam">../samples/variable_length_cutoff.ecam</file>
+    <file alias="samples/bench_spline.ecam">../samples/bench_spline.ecam</file>
+    <file alias="samples/bench_gear.ecam">../samples/bench_gear.ecam</file>
+  </qresource>
+</RCC>
