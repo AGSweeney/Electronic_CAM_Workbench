@@ -8,16 +8,6 @@
             "countsPerUnit": 10.025508226261124,
             "drive": "belt",
             "duration": 2.4,
-            "home": {
-                "at": 0,
-                "back": 25,
-                "dir": "+",
-                "fast": 100,
-                "order": 1,
-                "search": 0,
-                "slow": 10,
-                "then": "start"
-            },
             "master": "timeline",
             "motorPpr": 800,
             "name": "X travel",
@@ -157,14 +147,6 @@
         }
     ],
     "format": "ECamUI",
-    "inputs": [
-        {
-            "axis": 0,
-            "name": "X travel home",
-            "pin": "A-12",
-            "role": "home"
-        }
-    ],
     "master": {
         "countsPerRev": 4000,
         "crankConnector": 0,
